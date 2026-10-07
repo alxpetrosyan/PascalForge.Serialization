@@ -1,0 +1,55 @@
+# Build output. Everything generated lands under artifacts\ on purpose, so
+# this one rule covers the .exe, .dcu, .bpl, .dcp, .map and logs.
+/artifacts/
+/build/
+/temp/
+
+# Delphi leftovers, wherever they appear
+*.dcu
+*.exe
+*.dll
+*.bpl
+*.dcp
+*.map
+*.drc
+*.rsm
+*.tds
+*.stat
+*.otares
+*.identcache
+*.local
+*.~*
+*.dsk
+*.dsv
+*.cbk
+*.vlb
+__history/
+__recovery/
+
+# Scratch and logs. Build logs belong under artifacts\ (ignored above); one
+# anywhere else is a stray.
+*.log
+*.tmp
+*.bak
+*.orig
+Win32/
+Win64/
+
+# Per-developer IDE state, never the project itself
+*.dproj.local
+*.groupproj.local
+*.skincfg
+
+# Keep the project files and every source asset: .dpr .dpk .dproj .groupproj
+# .pas .inc .md .ps1 .cmd are all source and must be committed - and so are
+# the package and demo .res files (a .dpk does not compile without one) and
+# everything under tests\fixtures.
+
+# Other Delphi and editor state
+*.dres
+*.ddp
+*.mes
+ModelSupport_*/
+.vs/
+.vscode/
+.claude/

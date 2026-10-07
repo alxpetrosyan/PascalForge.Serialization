@@ -1,0 +1,15 @@
+PfDemo DEFINITIONS EXPLICIT TAGS ::= BEGIN
+
+  Subject ::= SEQUENCE {
+    id       INTEGER,
+    name     UTF8String,
+    city     UTF8String,
+    active   BOOLEAN
+  }
+
+  Audit ::= SEQUENCE {
+    who      UTF8String,
+    ok       BOOLEAN
+  }
+
+END

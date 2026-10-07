@@ -1,0 +1,20 @@
+# Delphi source is text. Normalise it in the repository and check it out with
+# native endings, so a Windows IDE and a Linux CI agree about what changed.
+*.pas   text eol=crlf
+*.dpr   text eol=crlf
+*.dpk   text eol=crlf
+*.inc   text eol=crlf
+*.dproj text eol=crlf
+*.groupproj text eol=crlf
+*.cmd   text eol=crlf
+*.ps1   text eol=crlf
+
+*.md    text
+*.json  text
+*.yml   text
+
+# Compiled and binary artifacts, if one is ever committed deliberately
+*.res   binary
+*.dcu   binary
+*.bpl   binary
+*.dcp   binary

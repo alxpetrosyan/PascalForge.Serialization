@@ -1,0 +1,32 @@
+id: 4815162342
+reference: "ORD-0007"
+status: STATUS_PAID
+lines {
+  sku: "SKU-1"
+  quantity: 2
+  unit_price: 19.5
+}
+lines {
+  sku: "SKU-2"
+  quantity: 1
+  unit_price: 4.25
+}
+tags: 7
+tags: 11
+tags: 13
+labels {
+  key: "channel"
+  value: "web"
+}
+labels {
+  key: "region"
+  value: "eu"
+}
+signature: "\001\002\003\372\377"
+placed {
+  seconds: 1709296245
+}
+paid: true
+big: 9000000000
+delta: -12345
+checksum: 81985529216486895

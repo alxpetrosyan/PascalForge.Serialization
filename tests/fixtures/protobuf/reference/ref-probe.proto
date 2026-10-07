@@ -1,0 +1,66 @@
+// The source of the committed reference fixtures beside it.
+//
+// This file exists to be compiled by OFFICIAL protoc, so that the descriptor
+// and the encoded message in this folder are produced by Google's own
+// implementation rather than by PascalForge. tests\ProtobufSchema also builds
+// a descriptor set with this library's own engine and reads it back, which is
+// a real cross-check between two halves of this library - but it is not
+// independent evidence, and this folder is.
+//
+// It deliberately uses the constructs whose encoding a reader can get wrong
+// in ways that still parse: a packed repeated field, a map, an enum with
+// non-contiguous numbers, a nested message, an sint64 (zig-zag, which is not
+// the same bytes as int64), a fixed64, and a well-known type.
+//
+// HOW THE FIXTURES BESIDE THIS FILE WERE MADE
+//
+//   protoc --version
+//     libprotoc 36.2
+//
+//   protoc --descriptor_set_out=ref-probe.desc --include_imports ref-probe.proto
+//
+//   protoc --encode=pfprobe.Probe ref-probe.proto < ref-probe-message.txtpb
+//     > ref-probe-message.bin
+//
+//   protoc --decode=pfprobe.Probe ref-probe.proto < ref-probe-message.bin
+//     > ref-probe-message.decoded.txtpb
+//
+// Re-running those three commands regenerates every committed fixture. The
+// test does NOT run them: a machine running the normal suite needs no protoc.
+
+syntax = "proto3";
+
+package pfprobe;
+
+import "google/protobuf/timestamp.proto";
+
+enum Status {
+  STATUS_NEW = 0;
+  STATUS_PAID = 5;
+  STATUS_SHIPPED = 10;
+}
+
+message Line {
+  string sku = 1;
+  int32 quantity = 2;
+  double unit_price = 3;
+}
+
+message Probe {
+  int64 id = 1;
+  string reference = 2;
+  Status status = 3;
+  repeated Line lines = 4;
+  // Packed by default in proto3, which is the case a reader gets wrong by
+  // expecting one tag per element.
+  repeated int32 tags = 5;
+  map<string, string> labels = 6;
+  bytes signature = 7;
+  google.protobuf.Timestamp placed = 8;
+  bool paid = 9;
+  uint64 big = 10;
+  // Zig-zag. A reader treating this as int64 gets a different number, and
+  // one that still looks plausible.
+  sint64 delta = 11;
+  fixed64 checksum = 12;
+}

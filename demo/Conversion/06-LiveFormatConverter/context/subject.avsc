@@ -1,0 +1,11 @@
+{
+  "type": "record",
+  "name": "Subject",
+  "namespace": "pfdemo",
+  "fields": [
+    { "name": "id",     "type": "long" },
+    { "name": "name",   "type": "string" },
+    { "name": "city",   "type": "string" },
+    { "name": "active", "type": "boolean" }
+  ]
+}

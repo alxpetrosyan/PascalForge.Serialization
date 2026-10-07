@@ -1,0 +1,31 @@
+// The descriptor the Live Format Converter loads for Protobuf.
+//
+// Protobuf bytes carry field NUMBERS and wire types and nothing else - no
+// names, no types, no message. A reader without the descriptor cannot tell
+// a string from a nested message, so the demo asks for this file before it
+// will offer a Protobuf conversion, and says so in those words.
+//
+// Two messages, so that choosing one is a real choice.
+//
+// Compiled with official protoc into subject.desc:
+//
+//   protoc --version
+//     libprotoc 36.2
+//
+//   protoc --descriptor_set_out=subject.desc subject.proto
+
+syntax = "proto3";
+
+package pfdemo;
+
+message Subject {
+  int64  id     = 1;
+  string name   = 2;
+  string city   = 3;
+  bool   active = 4;
+}
+
+message Audit {
+  string who = 1;
+  bool   ok  = 2;
+}
