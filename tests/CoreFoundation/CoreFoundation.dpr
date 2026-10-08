@@ -776,6 +776,7 @@ procedure TestNumbersAndInstants;
 var
   I, Wrong: Integer;
   D, Back: Double;
+  Bits: UInt64;
   V: TValue;
   Why: string;
   Ms: Int64;
@@ -788,8 +789,13 @@ begin
   Wrong := 0;
   for I := 1 to 20000 do
   begin
-    D := DoubleOf(NextBits);
-    if D.IsNan or D.IsInfinity then Continue;
+    { NaN and infinity are skipped by their BITS (an all-ones exponent),
+      before the value is ever a Double: on Win32 a signalling NaN loaded
+      into the x87 FPU raises EInvalidOp where invalid-operation exceptions
+      are unmasked, which is Delphi 11's default (Delphi 12 masks them). }
+    Bits := NextBits;
+    if (Bits shr 52) and $7FF = $7FF then Continue;
+    D := DoubleOf(Bits);
     if not (TStructuralText.TryParseFloat(TStructuralText.EncodeFloat(D), Back)
       and (BitsOf(Back) = BitsOf(D))) then Inc(Wrong);
   end;

@@ -1,7 +1,7 @@
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
     <PropertyGroup>
-        <ProjectGuid>{6F2B1A40-9C3E-4D7A-8B11-0E5A2C7D4402}</ProjectGuid>
-        <MainSource>PascalForge.Serialization.DataSet.dpk</MainSource>
+        <ProjectGuid>{B5BAACCD-74F2-4B59-AC59-F51AA322DCF8}</ProjectGuid>
+        <MainSource>PascalForge.Serialization.Runtime.dpk</MainSource>
         <ProjectVersion>20.2</ProjectVersion>
         <FrameworkType>None</FrameworkType>
         <Base>True</Base>
@@ -38,11 +38,11 @@
     <PropertyGroup Condition="'$(Base)'!=''">
         <!-- Nothing is ever written beside the source. Every generated file
              lands under artifacts, which is gitignored in one line. -->
-        <DCC_DcuOutput>..\artifacts\dcu\packages\$(Platform)\$(Config)</DCC_DcuOutput>
-        <DCC_BplOutput>..\artifacts\packages\$(Platform)\$(Config)</DCC_BplOutput>
-        <DCC_DcpOutput>..\artifacts\packages\$(Platform)\$(Config)</DCC_DcpOutput>
-        <DCC_ExeOutput>..\artifacts\bin\$(Platform)\$(Config)</DCC_ExeOutput>
-        <DCC_UnitSearchPath>..\src;$(DCC_UnitSearchPath)</DCC_UnitSearchPath>
+        <DCC_DcuOutput>..\..\artifacts\dcu\packages\Delphi12\$(Platform)\$(Config)</DCC_DcuOutput>
+        <DCC_BplOutput>..\..\artifacts\packages\Delphi12\$(Platform)\$(Config)</DCC_BplOutput>
+        <DCC_DcpOutput>..\..\artifacts\packages\Delphi12\$(Platform)\$(Config)</DCC_DcpOutput>
+        <DCC_ExeOutput>..\..\artifacts\bin\Delphi12\$(Platform)\$(Config)</DCC_ExeOutput>
+        <DCC_UnitSearchPath>..\..\src;$(DCC_UnitSearchPath)</DCC_UnitSearchPath>
         <DCC_Define>RELEASE;$(DCC_Define)</DCC_Define>
         <DCC_E>false</DCC_E>
         <DCC_N>false</DCC_N>
@@ -50,7 +50,8 @@
         <DCC_F>false</DCC_F>
         <DCC_K>false</DCC_K>
         <DCC_Namespace>System;Xml;Data;Datasnap;Web;Soap;Vcl;Vcl.Imaging;Vcl.Touch;Vcl.Samples;Vcl.Shell;System.Win;Data.Win;Datasnap.Win;Web.Win;Soap.Win;Xml.Win;Bde;$(DCC_Namespace)</DCC_Namespace>
-        <DCC_Description>PascalForge.Serialization.DataSet</DCC_Description>
+        <DCC_Description>PascalForge.Serialization.Runtime</DCC_Description>
+        <DllSuffix>$(Auto)</DllSuffix>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Cfg_1)'!=''">
         <DCC_Define>DEBUG;$(DCC_Define)</DCC_Define>
@@ -75,7 +76,7 @@
         <BorlandProject>
             <Delphi.Personality>
                 <Source>
-                    <Source Name="MainSource">PascalForge.Serialization.DataSet.dpk</Source>
+                    <Source Name="MainSource">PascalForge.Serialization.Runtime.dpk</Source>
                 </Source>
             </Delphi.Personality>
         </BorlandProject>

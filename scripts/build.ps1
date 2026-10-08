@@ -16,7 +16,8 @@ param(
 $ErrorActionPreference = 'Stop'
 $Repo = Split-Path -Parent $PSScriptRoot
 $Src  = Join-Path $Repo 'src'
-$Ide  = 'C:\Program Files (x86)\Embarcadero\Studio\23.0\bin'
+. (Join-Path $PSScriptRoot 'delphi.ps1')
+$Ide  = $DelphiBin
 $Dcc  = Join-Path $PSScriptRoot 'dcc.cmd'
 
 $platforms = if ($Platform -eq 'Both') { @('Win32', 'Win64') } else { @($Platform) }

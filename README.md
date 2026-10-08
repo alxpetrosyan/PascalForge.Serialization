@@ -9,7 +9,7 @@ when a default is not what you want, projection of data into a live
 
 No code generation, no base class to inherit from, no interface to implement.
 
-**Version 0.9.0 - release candidate.** Delphi 12, Win32 and Win64.
+**Version 1.0.0.** Tested with Delphi 12 Athens (12.3) and Delphi 11 Alexandria (11.3), Win32 and Win64.
 **License: MIT** ([`LICENSE`](LICENSE)).
 
 ## Quick start
@@ -219,9 +219,10 @@ streams, variant records, a cycle - is reviewed in
 
 ## Installing
 
-Add `src` to your unit search path, or open
-`projects\PascalForge.Serialization.groupproj` and build the two runtime
-packages: `PascalForge.Serialization.Runtime` - the core and every format,
+Add `src` to your unit search path, or open the group project for your
+Delphi - `projects\Delphi12\PascalForge.Serialization.Delphi12.groupproj` or
+`projects\Delphi11\PascalForge.Serialization.Delphi11.groupproj` - and build
+the two runtime packages: `PascalForge.Serialization.Runtime` - the core and every format,
 requiring the RTL only - and the optional `PascalForge.Serialization.DataSet`
 - the DataSet projection and TDataSet-as-JSON, which adds Data.DB, FireDAC and
 DataSnap. Compiled from source, a program still links only the formats it
@@ -230,7 +231,7 @@ names. See [`docs/packaging.md`](docs/packaging.md).
 **Loading a package is not registering a format:**
 
 ```pascal
-// PascalForge.Serialization.Runtime.bpl loaded: no format is registered
+// PascalForge.Serialization.Runtime<suffix>.bpl loaded: no format is registered
 TJsonSerializationRegistration.RegisterFormat;       // JSON, and only JSON
 TSerializationFormatsRegistration.RegisterAll;       // or every format
 ```
@@ -279,7 +280,9 @@ format you do not name is not linked at all,
 which `scripts\check-format-isolation.ps1` proves by building a probe for
 every format alone and in combination.
 
-Requires Delphi with extended RTTI; tested on Delphi 12, Win32 and Win64.
+Requires Delphi with extended RTTI. Tested with Delphi 12 Athens (12.3) and
+Delphi 11 Alexandria (11.3), Win32 and Win64: every test, demo and package
+builds and passes on both. Earlier versions are not tested.
 The DataSet layer needs FireDAC and DataSnap; the formats need neither, and
 `scripts\check-dependencies.ps1` proves from the linker map that a console
 program on Core and JSON links no VCL, FMX, FireDAC or Data.DB.

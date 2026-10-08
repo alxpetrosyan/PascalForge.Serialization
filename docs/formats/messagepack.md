@@ -90,7 +90,7 @@ TMessagePackSerializationRegistration.RegisterFormat;
 
 - Linking or importing `PascalForge.MessagePack.Registration` does **not**
   register the format.
-- Loading the runtime package `PascalForge.Serialization.Runtime.bpl`
+- Loading the `PascalForge.Serialization.Runtime` package
   does **not** register it.
 - `RegisterFormat` is idempotent. It raises `ESerializationFormatConflict`
   if a different handler already holds `TSerializationFormat.MessagePack`.

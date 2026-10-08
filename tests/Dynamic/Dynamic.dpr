@@ -166,7 +166,7 @@ procedure TestObjectBasics;
 var
   Obj: TDynamicObject;
   Child: TDynamicValue;
-  Ok: Boolean;
+  Ok, Caught: Boolean;
 begin
   Writeln;
   Writeln('--- an object: exact names, order, fluent building ---');
@@ -231,6 +231,26 @@ begin
     Check(Obj.Remove('last') and not Obj.Remove('last'), 'DYNAMIC_REMOVE');
     Obj.Delete(0);
     Check(Obj.Names[0] = 'country', 'DYNAMIC_DELETE_AT');
+
+    { By name: Delete raises for a missing member, Remove says False. }
+    Obj.Append('gone', 1).Append('kept', 2).Append('last-one', 3);
+    Obj.Delete('gone');
+    Check(not Obj.Contains('gone') and Obj.Contains('kept'), 'DYNAMIC_DELETE_BY_NAME');
+    Caught := False;
+    try
+      Obj.Delete('gone');
+    except
+      on E: EDynamicError do Caught := Pos('gone', E.Message) > 0;
+    end;
+    Check(Caught, 'DYNAMIC_DELETE_BY_NAME_MISSING_RAISES');
+    { By index, out of range: EDynamicError. }
+    Caught := False;
+    try
+      Obj.Delete(Obj.Count);
+    except
+      on E: EDynamicError do Caught := True;
+    end;
+    Check(Caught, 'DYNAMIC_OBJECT_DELETE_OUT_OF_RANGE_RAISES');
     Obj.Clear;
     Check((Obj.Count = 0) and (Obj.Find('k1') = nil), 'DYNAMIC_CLEAR');
   finally
@@ -289,6 +309,7 @@ end;
 procedure TestArrays;
 var
   Arr, Inner, Flat: TDynamicArray;
+  Caught: Boolean;
 begin
   Writeln;
   Writeln('--- arrays ---');
@@ -321,6 +342,23 @@ begin
     Arr.ReplaceAt(0, TDynamicValue.NewStr('ten'));
     Arr.Delete(1);
     Check((Arr[0].AsStr = 'ten') and (Arr[1].AsInt = 20), 'DYNAMIC_ARRAY_EDIT');
+    { Delete(Index): the item at the index, freed. }
+    Flat := TDynamicArray.Create;
+    try
+      Flat.Append(10).Append(20).Append(30);
+      Flat.Delete(1);
+      Check((Flat.Count = 2) and (Flat[0].AsInt = 10) and (Flat[1].AsInt = 30),
+        'DYNAMIC_ARRAY_DELETE_AT');
+      Caught := False;
+      try
+        Flat.Delete(-1);
+      except
+        on E: EDynamicError do Caught := True;
+      end;
+      Check(Caught and (Flat.Count = 2), 'DYNAMIC_ARRAY_DELETE_OUT_OF_RANGE_RAISES');
+    finally
+      Flat.Free;
+    end;
     Arr.AddObject.Append('k', 'v');
     Arr.AddArray.Append(True);
     Check((Arr[Arr.Count - 2].AsObject.Get('k').AsStr = 'v') and

@@ -393,7 +393,12 @@ type
     function ExtractAt(AIndex: Integer): TDynamicValue;
     { Takes the member out and frees it. False when there is none. }
     function Remove(const AName: string): Boolean;
-    procedure Delete(AIndex: Integer);
+    { Takes the member out and frees it; EDynamicError when there is none,
+      as Get. }
+    procedure Delete(const AName: string); overload;
+    { The member at AIndex taken out and freed; EDynamicError when AIndex is
+      out of range. }
+    procedure Delete(AIndex: Integer); overload;
     procedure Clear;
 
     { --- combining --- }
@@ -458,6 +463,8 @@ type
     { The item at AIndex replaced, the old one freed. }
     function ReplaceAt(AIndex: Integer; AValue: TDynamicValue): TDynamicArray;
     function ExtractAt(AIndex: Integer): TDynamicValue;
+    { The item at AIndex taken out and freed; EDynamicError when AIndex is
+      out of range. }
     procedure Delete(AIndex: Integer);
     procedure Clear;
 
@@ -1300,6 +1307,12 @@ begin
   V := Extract(AName);
   Result := V <> nil;
   V.Free;
+end;
+
+procedure TDynamicObject.Delete(const AName: string);
+begin
+  if not Remove(AName) then
+    raise EDynamicError.CreateFmt('The object has no member "%s".', [AName]);
 end;
 
 procedure TDynamicObject.Delete(AIndex: Integer);

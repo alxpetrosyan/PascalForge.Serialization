@@ -375,8 +375,11 @@ Test projects worth knowing about before changing a format:
 self-test: `LiveFormatConverter.exe --selftest` presses every control from
 code. `scripts\run-demos.ps1` runs it that way.
 
-Build the packages from the IDE with
-`projects\PascalForge.Serialization.groupproj`.
+Build the packages from the IDE with the group project for your Delphi:
+`projects\Delphi12\PascalForge.Serialization.Delphi12.groupproj` or
+`projects\Delphi11\PascalForge.Serialization.Delphi11.groupproj`. The scripts
+use Delphi 12 by default; set `PASCALFORGE_DELPHI=11` to run any of them with
+Delphi 11.
 
 ## Before you change behaviour
 

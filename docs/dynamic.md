@@ -108,7 +108,8 @@ Members keep **insertion order** and **exact names**: `name`, `Name` and
 | `Find(Name)`, `Get(Name)` | the member, or `nil`; `Get` raises when there is none |
 | `Contains`, `IndexOf`, `Names[I]`, `Items[I]`, `Count` | reading |
 | `Extract(Name)`, `ExtractAt(I)` | takes a member out; the caller owns it |
-| `Remove(Name)`, `Delete(I)`, `Clear` | takes members out and frees them |
+| `Delete(Name)`, `Delete(I)`, `Clear` | takes members out and frees them; `EDynamicError` when there is no such member or index |
+| `Remove(Name)` | the same by name, returning `False` instead of raising when there is none |
 | `Import(Source, Collision)` | copies another object's members in |
 | `MoveFrom(Source, Collision)` | **moves** them in, leaving `Source` empty |
 
@@ -125,7 +126,7 @@ replaced.
 | `InsertAt(Index, Value)` | adds at `Index`; returns the array |
 | `AddObject`, `AddArray` | adds an empty child and returns it |
 | `AppendRange(Other)` | appends **copies of Other's items** - the explicit flatten |
-| `ReplaceAt`, `ExtractAt`, `Delete`, `Clear` | editing |
+| `ReplaceAt`, `ExtractAt`, `Delete(I)`, `Clear` | editing; an index out of range raises `EDynamicError` |
 
 **Appending an array adds it as one nested item.** `Arr.Append(Other)` makes
 a two-level array; flattening is only ever the explicit `AppendRange`.

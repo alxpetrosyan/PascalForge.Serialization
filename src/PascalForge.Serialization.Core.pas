@@ -52,7 +52,7 @@ uses
 const
   { The library's version, in semantic-versioning form. While it is 0.x the
     public API may still change between minor versions. }
-  PASCALFORGE_SERIALIZATION_VERSION = '0.9.0';
+  PASCALFORGE_SERIALIZATION_VERSION = '1.0.0';
 
 { True when the type has a usable qualified name (i.e. it is declared in the
   interface section of a unit).  Never raises. }
@@ -4527,9 +4527,9 @@ begin
         if not TypeMayHoldObjects(ET, 0) then Exit;
         for I := 0 to AValue.GetArrayLength - 1 do
         begin
-          EV := AValue.GetArrayElement(I);
+          EV := AValue.GetArrayElement(Integer(I));
           if (not AExisting.IsEmpty) and (I < AExisting.GetArrayLength) then
-            EE := AExisting.GetArrayElement(I)
+            EE := AExisting.GetArrayElement(Integer(I))
           else
             EE := TValue.Empty;
           ReleaseBuiltAt(ET, EV, EE, ADepth + 1);
@@ -4643,7 +4643,7 @@ begin
       Items := LA.ToArrayMethod.Invoke(AContainer, []);
       for I := 0 to Items.GetArrayLength - 1 do
       begin
-        Loose := Loose + [Items.GetArrayElement(I)];
+        Loose := Loose + [Items.GetArrayElement(Integer(I))];
         LooseTypes := LooseTypes + [LA.ElementType];
       end;
     end;
@@ -4656,7 +4656,7 @@ begin
       Items := DA.Pairs(TValue.From<TObject>(AContainer));
       for I := 0 to Items.GetArrayLength - 1 do
       begin
-        Pair := Items.GetArrayElement(I);
+        Pair := Items.GetArrayElement(Integer(I));
         if (not OwnsKeys) and TypeMayHoldObjects(DA.KeyType, 0) then
         begin
           Loose := Loose + [DA.KeyOf(Pair)];
@@ -5145,7 +5145,7 @@ begin
   try
     for I := 0 to GNullableFamilies.Count - 1 do
     begin
-      Fam := GNullableFamilies[I];
+      Fam := GNullableFamilies[Integer(I)];
       if not SameNullableFamily(Fam, Base, Arity, UnitName) then Continue;
       { Registering the same family the same way twice is a no-op: two units
         may each register it, and neither can know about the other. }
@@ -5191,7 +5191,7 @@ begin
     Matched := False;
     for I := 0 to GNullableFamilies.Count - 1 do
     begin
-      Fam := GNullableFamilies[I];
+      Fam := GNullableFamilies[Integer(I)];
       if not SameNullableFamily(Fam, Base, Arity, UnitName) then Continue;
       { Belonging to the family is not enough: the record must actually carry
         the fields that family was registered with. }
@@ -5229,7 +5229,7 @@ begin
   try
     SetLength(Result, GNullableFamilies.Count);
     for I := 0 to GNullableFamilies.Count - 1 do
-      Result[I] := GNullableFamilies[I].Describe;
+      Result[I] := GNullableFamilies[Integer(I)].Describe;
   finally
     GNullableLock.Leave;
   end;
@@ -6103,7 +6103,7 @@ begin
     Exit;
   end;
   for I := 0 to High(AElements) do
-    AValue.SetArrayElement(I, AElements[I]);
+    AValue.SetArrayElement(Integer(I), AElements[I]);
   Result := True;
 end;
 

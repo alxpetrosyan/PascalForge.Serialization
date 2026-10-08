@@ -172,7 +172,7 @@ TDynamicSerializer.Populate(Existing, Value);
 | Type | |
 | --- | --- |
 | `TDynamicValue` | a value: `Kind`, `As*`, `AsObject`, `AsArray`, `Count`, `Items`, `Names`, `Find`, `Parent`, `Clone`, `Equals`, `Describe`; scalars from `NewNull`, `NewBool`, `NewInt`, `NewUInt`, `NewFloat`, `NewDecimal`, `NewStr`, `NewBytes`, `NewDate`, `NewTime`, `NewDateTime`, `NewExtended` |
-| `TDynamicObject` | `Append`, `InsertAt`, `AddObject`, `AddArray`, `AppendNull`, `AppendValue`, `InsertValueAt`, `Adopt`, `AppendOrReplace`, `Find`, `Get`, `Contains`, `IndexOf`, `Extract`, `ExtractAt`, `Remove`, `Delete`, `Clear`, `Import`, `MoveFrom` |
+| `TDynamicObject` | `Append`, `InsertAt`, `AddObject`, `AddArray`, `AppendNull`, `AppendValue`, `InsertValueAt`, `Adopt`, `AppendOrReplace`, `Find`, `Get`, `Contains`, `IndexOf`, `Extract`, `ExtractAt`, `Remove`, `Delete` (by name or index), `Clear`, `Import`, `MoveFrom` |
 | `TDynamicArray` | `Append`, `InsertAt`, `AddObject`, `AddArray`, `AppendNull`, `AppendValue`, `InsertValueAt`, `Adopt`, `AppendRange`, `ReplaceAt`, `ExtractAt`, `Delete`, `Clear` |
 | `TDynamicKind` | `Null`, `Bool`, `Int`, `UInt`, `Float`, `Decimal`, `Str`, `Bytes`, `Date`, `Time`, `DateTime`, `Arr`, `Obj`, `Extended` |
 | `TDynamicTag` | the tags an Extended value carries: `ObjectId`, `Decimal128`, `CborTag`, `MsgPackExtension`, `BigIntPositive`, `YamlAlias`, ... |

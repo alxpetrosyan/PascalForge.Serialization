@@ -1,0 +1,108 @@
+package PascalForge.Serialization.Runtime;
+
+{ Copyright (c) 2026 PascalForge
+  SPDX-License-Identifier: MIT }
+
+{ The serialization runtime: the shared core - type foundation, internal RTTI
+  metadata, general attributes, the dynamic model, the format registry and
+  the TSerialization facade - and every format: JSON, XML, BSON, Protobuf,
+  CBOR, MessagePack, YAML, CSV, Avro and ASN.1, each with its registration
+  unit, and PascalForge.Serialization.AllFormats.
+
+  Depends on the RTL only: no Data.DB, no FireDAC, no VCL.
+
+  One package, explicit registration. Loading this package registers no
+  format: TSerialization sees a format only after the application calls
+  T<Format>SerializationRegistration.RegisterFormat, or
+  TSerializationFormatsRegistration.RegisterAll. The direct serializers
+  (TJsonSerializer and the rest) need no registration at all. Formats stay
+  separate units with no dependency on one another, so a program compiled
+  from source links only the formats it uses; the package is the unit of
+  deployment, not of design.
+
+  The package is named .Runtime, not PascalForge.Serialization, because a
+  package must not share its name with a unit it contains: on Win64 an
+  application that links such a package and uses that unit fails at startup
+  (runtime error 217). scripts\check-packages.ps1 refuses the clash.
+
+      PascalForge.Serialization.Runtime    this package
+        PascalForge.Serialization.DataSet  the optional DataSet projection
+                                           (adds Data.DB, FireDAC, DataSnap) }
+
+{$R *.res}
+{$IFDEF IMPLICITBUILDING This IFDEF should not be used by users}
+{$ALIGN 8}
+{$ASSERTIONS ON}
+{$BOOLEVAL OFF}
+{$DEBUGINFO OFF}
+{$EXTENDEDSYNTAX ON}
+{$IMPORTEDDATA ON}
+{$IOCHECKS ON}
+{$LOCALSYMBOLS ON}
+{$LONGSTRINGS ON}
+{$OPENSTRINGS ON}
+{$OPTIMIZATION ON}
+{$OVERFLOWCHECKS OFF}
+{$RANGECHECKS OFF}
+{$REFERENCEINFO ON}
+{$SAFEDIVIDE OFF}
+{$STACKFRAMES OFF}
+{$TYPEDADDRESS OFF}
+{$VARSTRINGCHECKS ON}
+{$WRITEABLECONST OFF}
+{$MINENUMSIZE 1}
+{$IMAGEBASE $400000}
+{$DEFINE RELEASE}
+{$ENDIF IMPLICITBUILDING}
+{$DESCRIPTION 'PascalForge Serialization - runtime: core and every format (Delphi 11 Alexandria)'}
+{$RUNONLY}
+{$LIBSUFFIX AUTO}
+{$IMPLICITBUILD ON}
+
+requires
+  rtl;
+
+contains
+  PascalForge.Serialization.Core in '..\..\src\PascalForge.Serialization.Core.pas',
+  PascalForge.Serialization.Attributes in '..\..\src\PascalForge.Serialization.Attributes.pas',
+  PascalForge.Serialization.Internal in '..\..\src\PascalForge.Serialization.Internal.pas',
+  PascalForge.Dynamic in '..\..\src\PascalForge.Dynamic.pas',
+  PascalForge.Dynamic.Internal in '..\..\src\PascalForge.Dynamic.Internal.pas',
+  PascalForge.Nullable in '..\..\src\PascalForge.Nullable.pas',
+  PascalForge.Serialization in '..\..\src\PascalForge.Serialization.pas',
+  PascalForge.Json in '..\..\src\PascalForge.Json.pas',
+  PascalForge.Json.Internal in '..\..\src\PascalForge.Json.Internal.pas',
+  PascalForge.Json.Registration in '..\..\src\PascalForge.Json.Registration.pas',
+  PascalForge.Xml in '..\..\src\PascalForge.Xml.pas',
+  PascalForge.Xml.Internal in '..\..\src\PascalForge.Xml.Internal.pas',
+  PascalForge.Xml.Registration in '..\..\src\PascalForge.Xml.Registration.pas',
+  PascalForge.Bson in '..\..\src\PascalForge.Bson.pas',
+  PascalForge.Bson.Internal in '..\..\src\PascalForge.Bson.Internal.pas',
+  PascalForge.Bson.Registration in '..\..\src\PascalForge.Bson.Registration.pas',
+  PascalForge.Protobuf in '..\..\src\PascalForge.Protobuf.pas',
+  PascalForge.Protobuf.Internal in '..\..\src\PascalForge.Protobuf.Internal.pas',
+  PascalForge.Protobuf.Schema in '..\..\src\PascalForge.Protobuf.Schema.pas',
+  PascalForge.Protobuf.Registration in '..\..\src\PascalForge.Protobuf.Registration.pas',
+  PascalForge.Cbor in '..\..\src\PascalForge.Cbor.pas',
+  PascalForge.Cbor.Internal in '..\..\src\PascalForge.Cbor.Internal.pas',
+  PascalForge.Cbor.Registration in '..\..\src\PascalForge.Cbor.Registration.pas',
+  PascalForge.MessagePack in '..\..\src\PascalForge.MessagePack.pas',
+  PascalForge.MessagePack.Internal in '..\..\src\PascalForge.MessagePack.Internal.pas',
+  PascalForge.MessagePack.Registration in '..\..\src\PascalForge.MessagePack.Registration.pas',
+  PascalForge.Yaml in '..\..\src\PascalForge.Yaml.pas',
+  PascalForge.Yaml.Internal in '..\..\src\PascalForge.Yaml.Internal.pas',
+  PascalForge.Yaml.Registration in '..\..\src\PascalForge.Yaml.Registration.pas',
+  PascalForge.Csv in '..\..\src\PascalForge.Csv.pas',
+  PascalForge.Csv.Internal in '..\..\src\PascalForge.Csv.Internal.pas',
+  PascalForge.Csv.Registration in '..\..\src\PascalForge.Csv.Registration.pas',
+  PascalForge.Avro in '..\..\src\PascalForge.Avro.pas',
+  PascalForge.Avro.Internal in '..\..\src\PascalForge.Avro.Internal.pas',
+  PascalForge.Avro.Schema in '..\..\src\PascalForge.Avro.Schema.pas',
+  PascalForge.Avro.Registration in '..\..\src\PascalForge.Avro.Registration.pas',
+  PascalForge.Asn1 in '..\..\src\PascalForge.Asn1.pas',
+  PascalForge.Asn1.Internal in '..\..\src\PascalForge.Asn1.Internal.pas',
+  PascalForge.Asn1.Schema in '..\..\src\PascalForge.Asn1.Schema.pas',
+  PascalForge.Asn1.Registration in '..\..\src\PascalForge.Asn1.Registration.pas',
+  PascalForge.Serialization.AllFormats in '..\..\src\PascalForge.Serialization.AllFormats.pas';
+
+end.

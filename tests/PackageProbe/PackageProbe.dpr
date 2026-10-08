@@ -33,6 +33,15 @@ uses
   PascalForge.Json.Registration,
   PascalForge.Serialization.AllFormats;
 
+const
+  { The packages are built with LIBSUFFIX AUTO, so the BPL file name carries
+    the compiler's package version: 280 for Delphi 11, 290 for Delphi 12. }
+  {$IF CompilerVersion >= 36.0}
+  PACKAGE_SUFFIX = '290';
+  {$ELSE}
+  PACKAGE_SUFFIX = '280';
+  {$IFEND}
+
 var
   GFailures: Integer = 0;
 
@@ -126,7 +135,7 @@ begin
     Check(RegisteredCount = 0, 'UNREGISTER_ALL_LEAVES_NONE');
 
     Writeln('-- the DataSet package, loaded with LoadPackage --');
-    DataSetPackage := LoadPackage('PascalForge.Serialization.DataSet.bpl');
+    DataSetPackage := LoadPackage('PascalForge.Serialization.DataSet' + PACKAGE_SUFFIX + '.bpl');
     try
       Check(RegisteredCount = 0, 'DATASET_BPL_LOAD_REGISTERS_NO_FORMAT');
       Check(not CallClassFunction('PascalForge.DataSet.Json.TDataSetJsonIntegration',

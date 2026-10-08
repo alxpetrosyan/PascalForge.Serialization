@@ -96,7 +96,7 @@ TProtobufSerializationRegistration.RegisterFormat;
 
 - Linking or importing `PascalForge.Protobuf.Registration` does **not**
   register the format.
-- Loading the runtime package `PascalForge.Serialization.Runtime.bpl` does
+- Loading the `PascalForge.Serialization.Runtime` package does
   **not** register it.
 - `RegisterFormat` is idempotent. It raises `ESerializationFormatConflict`
   if a different handler already holds `TSerializationFormat.Protobuf`.

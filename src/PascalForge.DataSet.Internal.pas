@@ -1529,7 +1529,7 @@ begin
       Arr := APlan.ToArrayMethod.Invoke(AValue.AsObject, []);
       for I := 0 to Arr.GetArrayLength - 1 do
       begin
-        Elem := Arr.GetArrayElement(I);
+        Elem := Arr.GetArrayElement(Integer(I));
         Nested.Append;
         if APlan.Item.Kind = TDsKind.NestedObject then
           WriteMember(APlan.Item, Elem, Nested, '')
@@ -1725,7 +1725,7 @@ begin
         arr := toArray.Invoke(PObject(pData)^, []);
         for i := 0 to arr.GetArrayLength - 1 do
         begin
-          elem := arr.GetArrayElement(i);
+          elem := arr.GetArrayElement(Integer(i));
           nestedDS.Append;
           if FP.ElemMember <> nil then
           begin

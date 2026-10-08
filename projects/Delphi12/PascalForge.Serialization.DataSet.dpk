@@ -1,0 +1,60 @@
+package PascalForge.Serialization.DataSet;
+
+{ Copyright (c) 2026 PascalForge
+  SPDX-License-Identifier: MIT }
+
+{ The DataSet projection: DTO -> DataSet, a DataSet from or as any format's
+  document, and the JSON integration for TDataSet members inside JSON
+  documents (PascalForge.DataSet.Json - still an explicit
+  TDataSetJsonIntegration.Register at startup; loading this package
+  registers nothing).
+
+  Separate from PascalForge.Serialization.Runtime for one reason: it needs
+  Data.DB, FireDAC and DataSnap (dbrtl, dsnap, FireDAC), and an application
+  that only serializes objects should not have to ship any of that. }
+
+{$R *.res}
+{$IFDEF IMPLICITBUILDING This IFDEF should not be used by users}
+{$ALIGN 8}
+{$ASSERTIONS ON}
+{$BOOLEVAL OFF}
+{$DEBUGINFO OFF}
+{$EXTENDEDSYNTAX ON}
+{$IMPORTEDDATA ON}
+{$IOCHECKS ON}
+{$LOCALSYMBOLS ON}
+{$LONGSTRINGS ON}
+{$OPENSTRINGS ON}
+{$OPTIMIZATION ON}
+{$OVERFLOWCHECKS OFF}
+{$RANGECHECKS OFF}
+{$REFERENCEINFO ON}
+{$SAFEDIVIDE OFF}
+{$STACKFRAMES OFF}
+{$TYPEDADDRESS OFF}
+{$VARSTRINGCHECKS ON}
+{$WRITEABLECONST OFF}
+{$MINENUMSIZE 1}
+{$IMAGEBASE $400000}
+{$DEFINE RELEASE}
+{$ENDIF IMPLICITBUILDING}
+{$DESCRIPTION 'PascalForge Serialization - DataSet projection (Delphi 12 Athens)'}
+{$RUNONLY}
+{$LIBSUFFIX AUTO}
+{$IMPLICITBUILD ON}
+
+requires
+  rtl,
+  dbrtl,
+  dsnap,
+  FireDAC,
+  FireDACCommonDriver,
+  PascalForge.Serialization.Runtime;
+
+contains
+  PascalForge.DataSet in '..\..\src\PascalForge.DataSet.pas',
+  PascalForge.DataSet.Internal in '..\..\src\PascalForge.DataSet.Internal.pas',
+  PascalForge.DataSet.Packet in '..\..\src\PascalForge.DataSet.Packet.pas',
+  PascalForge.DataSet.Json in '..\..\src\PascalForge.DataSet.Json.pas';
+
+end.

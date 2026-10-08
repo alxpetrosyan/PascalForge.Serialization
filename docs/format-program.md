@@ -167,15 +167,16 @@ difference between a wall and a door.
 
 ## The packages
 
-Two packages in `projects\`, built together by
-`PascalForge.Serialization.groupproj`:
+Two packages, in one folder per Delphi version (`projects\Delphi11`,
+`projects\Delphi12`), each built by that folder's group project:
 
 | package | contains |
 | --- | --- |
 | `PascalForge.Serialization.Runtime.dpk` | the core - `TSerializationFormat`, the registry, the handler contract, the dynamic model, the internal metadata, `PascalForge.Nullable` - and every format with its registration unit, plus `PascalForge.Serialization.AllFormats` |
 | `PascalForge.Serialization.DataSet.dpk` | the DataSet projection, and TDataSet as JSON (`PascalForge.DataSet.Json`) |
 
-**A new format's units go into the Runtime package's `contains` list**, and
+**A new format's units go into the Runtime package's `contains` list** -
+in every version folder - and
 its registration unit with them; Runtime requires `rtl` and nothing else,
 and `scripts\check-packages.ps1` fails if that changes. Isolation between
 formats is not expressed in the packaging any more but in source, where

@@ -110,7 +110,7 @@ TAsn1SerializationRegistration.RegisterFormat;
   and differ only in the rule it carries.
 - Linking or importing `PascalForge.Asn1.Registration` does **not** register
   the formats.
-- Loading the runtime package `PascalForge.Serialization.Runtime.bpl` does
+- Loading the `PascalForge.Serialization.Runtime` package does
   **not** register them.
 - `RegisterFormat` is idempotent. It raises `ESerializationFormatConflict`
   if a different handler already holds one of the three values.

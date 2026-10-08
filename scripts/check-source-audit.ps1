@@ -120,7 +120,7 @@ Report 'NO_REGISTRATION_INITIALIZATION_SIDE_EFFECTS' $sideEffects
 
 # --------------------------------------- package / unit name clashes --
 $clashes = @()
-foreach ($dpk in Get-ChildItem -LiteralPath (Join-Path $Repo 'projects') -Filter *.dpk -File) {
+foreach ($dpk in Get-ChildItem -LiteralPath (Join-Path $Repo 'projects') -Recurse -Filter *.dpk -File) {
   $text = Get-Content -LiteralPath $dpk.FullName -Raw
   if ($text -match ('(?m)^\s*' + [regex]::Escape($dpk.BaseName) + '\s+in\s')) { $clashes += "$($dpk.Name) contains a unit of its own name" }
 }

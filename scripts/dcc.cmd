@@ -3,7 +3,10 @@ rem Compile one project against the library in src\.
 rem   dcc.cmd <project.dpr> [dcc32|dcc64] [output-subfolder]
 rem Everything generated lands under artifacts\, never beside source.
 setlocal
-call "C:\Program Files (x86)\Embarcadero\Studio\23.0\bin\rsvars.bat" >nul
+rem PASCALFORGE_DELPHI=11 builds with Delphi 11 (Studio 22.0); the default is Delphi 12.
+set STUDIO=23.0
+if "%PASCALFORGE_DELPHI%"=="11" set STUDIO=22.0
+call "C:\Program Files (x86)\Embarcadero\Studio\%STUDIO%\bin\rsvars.bat" >nul
 
 set REPO=%~dp0..
 set COMPILER=%~2

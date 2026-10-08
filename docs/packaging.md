@@ -42,8 +42,21 @@ on, and in the Runtime package with it.
 
 ## Runtime packages
 
-`projects\PascalForge.Serialization.groupproj` builds two packages, each for
-Win32 and Win64, into `artifacts\packages\<Platform>\<Config>`:
+There is one set of package projects per Delphi version, as JVCL and most
+Delphi libraries ship them:
+
+| Delphi | folder | group project | BPL suffix |
+| --- | --- | --- | --- |
+| 12 Athens | `projects\Delphi12` | `PascalForge.Serialization.Delphi12.groupproj` | `290` |
+| 11 Alexandria | `projects\Delphi11` | `PascalForge.Serialization.Delphi11.groupproj` | `280` |
+
+The packages use `{$LIBSUFFIX AUTO}`, so a BPL is named after the compiler -
+`PascalForge.Serialization.Runtime290.bpl` for Delphi 12,
+`PascalForge.Serialization.Runtime280.bpl` for Delphi 11 - and both can be
+installed on one machine. The DCP keeps the plain name, so a project's
+*Runtime packages* list says `PascalForge.Serialization.Runtime` whichever
+version builds it. Each version builds two packages, Win32 and Win64, into
+`artifacts\packages\Delphi<version>\<Platform>\<Config>`:
 
 | package | contains | requires |
 | --- | --- | --- |
@@ -87,7 +100,7 @@ Notes:
 ## Package load is not format registration
 
 ```pascal
-// PascalForge.Serialization.Runtime.bpl is loaded: no format is registered.
+// PascalForge.Serialization.Runtime<suffix>.bpl is loaded: no format is registered.
 
 TJsonSerializationRegistration.RegisterFormat;
 // now TSerialization can reach TSerializationFormat.Json - and only JSON

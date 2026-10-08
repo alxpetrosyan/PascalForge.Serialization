@@ -1566,7 +1566,7 @@ begin
     Value.Free;
   end;
   if Length(Again) <> Length(AData) then Exit(False);
-  Result := CompareMem(@Again[0], @AData[0], Length(AData));
+  Result := CompareMem(@Again[0], @AData[0], Integer(Length(AData)));
 end;
 
 function DecimalTextToCbor(const AText: string): TCborValue; forward;

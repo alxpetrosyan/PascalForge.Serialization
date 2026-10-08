@@ -38,8 +38,9 @@ package PascalForge.Serialization.DataSet;
 {$IMAGEBASE $400000}
 {$DEFINE RELEASE}
 {$ENDIF IMPLICITBUILDING}
-{$DESCRIPTION 'PascalForge Serialization - DataSet projection'}
+{$DESCRIPTION 'PascalForge Serialization - DataSet projection (Delphi 11 Alexandria)'}
 {$RUNONLY}
+{$LIBSUFFIX AUTO}
 {$IMPLICITBUILD ON}
 
 requires
@@ -51,9 +52,9 @@ requires
   PascalForge.Serialization.Runtime;
 
 contains
-  PascalForge.DataSet in '..\src\PascalForge.DataSet.pas',
-  PascalForge.DataSet.Internal in '..\src\PascalForge.DataSet.Internal.pas',
-  PascalForge.DataSet.Packet in '..\src\PascalForge.DataSet.Packet.pas',
-  PascalForge.DataSet.Json in '..\src\PascalForge.DataSet.Json.pas';
+  PascalForge.DataSet in '..\..\src\PascalForge.DataSet.pas',
+  PascalForge.DataSet.Internal in '..\..\src\PascalForge.DataSet.Internal.pas',
+  PascalForge.DataSet.Packet in '..\..\src\PascalForge.DataSet.Packet.pas',
+  PascalForge.DataSet.Json in '..\..\src\PascalForge.DataSet.Json.pas';
 
 end.

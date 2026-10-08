@@ -35,9 +35,16 @@ param(
 )
 $ErrorActionPreference = 'Continue'
 $Repo = Split-Path -Parent $PSScriptRoot
-$Projects = Join-Path $Repo 'projects'
+. (Join-Path $PSScriptRoot 'delphi.ps1')
+$RsVars = $DelphiRsVars
+# One set of package projects per Delphi version, as JVCL and most libraries
+# ship them: projects\Delphi11, projects\Delphi12. LIBSUFFIX AUTO names the
+# BPLs after the compiler (Runtime280.bpl, Runtime290.bpl), and each version
+# writes to its own artifacts folder, so the two never meet.
+$Projects = Join-Path $Repo "projects\Delphi$DelphiVersion"
+$Artifacts = "artifacts\packages\Delphi$DelphiVersion"
+$ArtifactDcu = "artifacts\dcu\packages\Delphi$DelphiVersion"
 $OutDir = Join-Path $Repo 'artifacts\package-logs'
-$RsVars = 'C:\Program Files (x86)\Embarcadero\Studio\23.0\bin\rsvars.bat'
 
 if (-not (Test-Path -LiteralPath $RsVars)) {
   Write-Host "rsvars.bat not found at $RsVars"
@@ -51,7 +58,7 @@ New-Item -ItemType Directory -Force -Path $OutDir | Out-Null
 # Start from empty package output, so a .bpl left by an earlier layout can
 # never be what the probe loads.
 foreach ($p in $platforms) {
-  foreach ($dir in @("artifacts\packages\$p\$Config", "artifacts\dcu\packages\$p\$Config")) {
+  foreach ($dir in @("$Artifacts\$p\$Config", "$ArtifactDcu\$p\$Config")) {
     $full = Join-Path $Repo $dir
     if (Test-Path -LiteralPath $full) { Remove-Item -LiteralPath $full -Recurse -Force }
   }
@@ -95,7 +102,8 @@ exit /b %ERRORLEVEL%
     # misconfigured even when the build succeeds.
     $emitted = @()
     foreach ($ext in @('bpl', 'dcp', 'exe')) {
-      $hit = Get-ChildItem -LiteralPath $Repo -Recurse -Filter "$($proj.BaseName).$ext" -File -ErrorAction SilentlyContinue |
+      # LIBSUFFIX AUTO: the .bpl carries the compiler's suffix, the .dcp does not.
+      $hit = Get-ChildItem -LiteralPath (Join-Path $Repo 'artifacts') -Recurse -Filter "$($proj.BaseName)*.$ext" -File -ErrorAction SilentlyContinue |
         Where-Object { $_.LastWriteTime -gt (Get-Item -LiteralPath $cmd).LastWriteTime.AddMinutes(-5) }
       if ($hit) { $emitted += $ext }
     }
@@ -166,7 +174,7 @@ $nameClash = ($clashes.Count -eq 0)
 $probeOk = $true
 if ($failed -eq 0) {
   foreach ($p in $platforms) {
-    $pkgDir = Join-Path $Repo "artifacts\packages\$p\$Config"
+    $pkgDir = Join-Path $Repo "$Artifacts\$p\$Config"
     $probeOut = Join-Path $Repo "artifacts\package-probe\$p"
     $probeDcu = Join-Path $Repo "artifacts\dcu\package-probe\$p"
     New-Item -ItemType Directory -Force -Path $probeOut, $probeDcu | Out-Null
