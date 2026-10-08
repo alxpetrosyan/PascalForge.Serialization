@@ -337,7 +337,7 @@ zero-argument constructor, then `TObject.Create`; a type with only
 parameterised constructors and no factory raises, saying so.
 
 **Nullable families** are decided once, in Core, for every format:
-`TSerializationTypes.RegisterNullableFamily<T>`. See
+`TSerialization.RegisterNullableFamily<T>`. See
 [`nullable-families.md`](nullable-families.md).
 
 **Text and bytes.** Encoding is an explicit step at the edge -

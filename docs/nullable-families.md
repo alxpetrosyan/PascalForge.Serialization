@@ -12,9 +12,9 @@ nullable in one format and an opaque record in another.
 
 ```pascal
 uses
-  PascalForge.Serialization.Core, Other.Maybe;
+  PascalForge.Serialization, Other.Maybe;
 
-TSerializationTypes.RegisterNullableFamily<TMaybe<Integer>>;
+TSerialization.RegisterNullableFamily<TMaybe<Integer>>;
 ```
 
 That registers the **family**, not the specialization. `TMaybe<string>`,
@@ -40,7 +40,7 @@ else: no interface, no virtual call, no lookup.
 ### Different field names
 
 ```pascal
-TSerializationTypes.RegisterNullableFamily<TOptional<Integer>>(
+TSerialization.RegisterNullableFamily<TOptional<Integer>>(
   TNullableLayout.Fields('FPayload', 'FPresent'));
 ```
 
@@ -124,13 +124,13 @@ serializer.
 ## Inspecting the table
 
 ```pascal
-for var S in TSerializationTypes.RegisteredNullableFamilies do
+for var S in TSerialization.RegisteredNullableFamilies do
   Writeln(S);        //  TNullable<1> [FValue/FHasValue]
                      //  TMaybe<1> [FValue/FHasValue]
                      //  TOptional<1> [FPayload/FPresent]
 ```
 
-`TSerializationTypes.IsNullableType(TypeInfo(TMaybe<string>))` answers the
+`TSerialization.IsNullableType(TypeInfo(TMaybe<string>))` answers the
 question directly, and `TryGetNullableAccess` returns the resolved inner type
 and offsets if you need them.
 

@@ -669,6 +669,50 @@ tests. See [`configuration-lifecycle.md`](configuration-lifecycle.md).
 
 ---
 
+## Recognize another library's nullable
+
+```pascal
+uses
+  PascalForge.Serialization;
+
+// at startup, before anything of that type is serialized
+TSerialization.RegisterNullableFamily<TMaybe<Integer>>;            // FValue / FHasValue
+TSerialization.RegisterNullableFamily<TOptional<Integer>>(
+  TNullableLayout.Fields('FPayload', 'FPresent'));
+
+TSerialization.IsNullableType(TypeInfo(TMaybe<string>));          // True
+TSerialization.RegisteredNullableFamilies;                        // for diagnostics
+```
+
+`PascalForge.Nullable.TNullable<T>` needs no registration. The specialization
+is a sample: the whole generic family is registered, and every format and the
+DataSet projection recognize it. `TNullableLayout` and `ENullableFamilyError`
+are re-exported by `PascalForge.Serialization`, so no other unit is needed.
+See [`nullable-families.md`](nullable-families.md).
+
+## Internal: the engine plumbing in Core
+
+`PascalForge.Serialization.Core` also declares the machinery the engines
+share. It is public only because Delphi has no visibility between units; it
+is **not part of the supported API**, may change in any release, and
+application code should not call it:
+
+`TSerializationTypes`, `TSerializationGraphGuard`, `TSerializationOwnership`,
+`TSerializationVariants`, `TSerializationTypeInfo`, `TStructuralText`,
+`TStructuralPath`, `TStructuralRoute`, `TStructuralRouteStep`,
+`TNullableAccess`, `TListAccess`, `TDictionaryAccess`, `TContainerKind`,
+`TDateTimePolicy`, `TDateTimePolicies`, and the format-handler contract
+`TSerializationFormatHandler` / `TSerializationFormats` (formats are
+registered with `T<Format>SerializationRegistration` and queried through
+`TSerialization`).
+
+Everything else Core declares - the exceptions, `TSerializationFormat`,
+`TSerializationPayload`, the structural conversion options and profiles,
+`TSerializationContext` and `TSerializationSchema`, `TSerializationFormatCapability`,
+`TDecimal128`, `TNullableLayout` - is public API.
+
+---
+
 ## The other engines
 
 Each of these is a real engine. A Delphi value is written straight to the

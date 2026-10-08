@@ -106,7 +106,7 @@ written; text with one is read as the instant it states, normalised to UTC.
 
 `PascalForge.Nullable.TNullable<T>` is recognised automatically. A foreign
 nullable family is recognised once it is registered with
-`TSerializationTypes.RegisterNullableFamily<T>` — see
+`TSerialization.RegisterNullableFamily<T>` — see
 [`nullable-families.md`](nullable-families.md). Recognition is shared: JSON,
 XML, BSON and the DataSet projection all consume the same metadata.
 

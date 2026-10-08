@@ -78,7 +78,8 @@ type
   ESerializationFormatCapability = PascalForge.Serialization.Core.ESerializationFormatCapability;
   TSerializationFormatCapability = PascalForge.Serialization.Core.TSerializationFormatCapability;
   TSerializationFormatCapabilities = PascalForge.Serialization.Core.TSerializationFormatCapabilities;
-  TSerializationOwnership = PascalForge.Serialization.Core.TSerializationOwnership;
+  TNullableLayout = PascalForge.Serialization.Core.TNullableLayout;
+  ENullableFamilyError = PascalForge.Serialization.Core.ENullableFamilyError;
 
   TStructuralConversionProfile = PascalForge.Serialization.Core.TStructuralConversionProfile;
   TStructuralConversionOptions = PascalForge.Serialization.Core.TStructuralConversionOptions;
@@ -96,6 +97,31 @@ type
     class function DoDeserialize(ATypeInfo: PTypeInfo;
       const APayload: TSerializationPayload; AFormat: TSerializationFormat): TValue; static;
   public
+    { --- nullables from other libraries ------------------------------------
+
+      PascalForge.Nullable.TNullable<T> is recognized out of the box. Any
+      other library's nullable - a record with a value field and a Boolean
+      flag - is recognized by every format and the DataSet projection once
+      its family is registered, at startup, before anything of that type is
+      serialized:
+
+          TSerialization.RegisterNullableFamily<TMaybe<Integer>>;
+          TSerialization.RegisterNullableFamily<TOptional<Integer>>(
+            TNullableLayout.Fields('FPayload', 'FPresent'));
+
+      The specialization is a sample: the whole generic family is
+      registered, every TMaybe<X> included. The default layout is FValue /
+      FHasValue. Raises ENullableFamilyError when T cannot be a nullable
+      family, or when the family is already registered with another
+      layout. See docs/nullable-families.md. }
+    class procedure RegisterNullableFamily<T>; overload; static;
+    class procedure RegisterNullableFamily<T>(
+      const ALayout: TNullableLayout); overload; static;
+    { True for a specialization of a registered family. }
+    class function IsNullableType(ATypeInfo: PTypeInfo): Boolean; static;
+    { The registered family keys, for diagnostics. }
+    class function RegisteredNullableFamilies: TArray<string>; static;
+
     { --- is a format available? -------------------------------------------
       Worth asking before offering it, rather than catching the exception. }
     class function IsRegistered(AFormat: TSerializationFormat): Boolean; static;
@@ -314,6 +340,30 @@ begin
   Result := TSerializationFormats.Require(AFormat,
     TSerializationFormatCapability.ContractDeserialize).DeserializeTyped(
     ATypeInfo, APayload);
+end;
+
+{ -------------------------------------------------------------- nullables --- }
+
+class procedure TSerialization.RegisterNullableFamily<T>;
+begin
+  TSerializationTypes.RegisterNullableFamilyFor(System.TypeInfo(T),
+    TNullableLayout.Default);
+end;
+
+class procedure TSerialization.RegisterNullableFamily<T>(
+  const ALayout: TNullableLayout);
+begin
+  TSerializationTypes.RegisterNullableFamilyFor(System.TypeInfo(T), ALayout);
+end;
+
+class function TSerialization.IsNullableType(ATypeInfo: PTypeInfo): Boolean;
+begin
+  Result := TSerializationTypes.IsNullableType(ATypeInfo);
+end;
+
+class function TSerialization.RegisteredNullableFamilies: TArray<string>;
+begin
+  Result := TSerializationTypes.RegisteredNullableFamilies;
 end;
 
 { ----------------------------------------------------------- availability --- }

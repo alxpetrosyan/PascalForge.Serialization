@@ -9,7 +9,7 @@ program NullableFamilies;
   knows its own, and learns about anyone else's from a single registration
   that names the GENERIC FAMILY, not a specialization:
 
-      TSerializationTypes.RegisterNullableFamily<TMaybe<Integer>>;
+      TSerialization.RegisterNullableFamily<TMaybe<Integer>>;
 
   From that point TMaybe<string>, TMaybe<TDateTime> and every other
   specialization - including ones written later - are nullables too. The
@@ -38,6 +38,7 @@ uses
   RivalNullables in 'RivalNullables.pas',
   ForeignNullables in 'ForeignNullables.pas',
   PascalForge.Serialization.Core in '..\..\src\PascalForge.Serialization.Core.pas',
+  PascalForge.Serialization in '..\..\src\PascalForge.Serialization.pas',
   PascalForge.Nullable in '..\..\src\PascalForge.Nullable.pas',
   PascalForge.Json in '..\..\src\PascalForge.Json.pas',
   PascalForge.DataSet in '..\..\src\PascalForge.DataSet.pas';
@@ -107,9 +108,9 @@ type
 procedure TestUnregisteredIsNotNullable;
 begin
   Writeln('-- before registration --');
-  Check(not TSerializationTypes.IsNullableType(TypeInfo(TMaybe<Integer>)),
+  Check(not TSerialization.IsNullableType(TypeInfo(TMaybe<Integer>)),
     'FOREIGN_NULLABLE_UNREGISTERED_NOT_RECOGNIZED');
-  Check(not TSerializationTypes.IsNullableType(TypeInfo(TOptional<Integer>)),
+  Check(not TSerialization.IsNullableType(TypeInfo(TOptional<Integer>)),
     'FOREIGN_NULLABLE_UNREGISTERED_CUSTOM_NOT_RECOGNIZED');
   Note('TMaybe<T> has FValue/FHasValue exactly like TNullable<T> and is still');
   Note('not a nullable: identity is the declaring family, not the shape.');
@@ -132,7 +133,7 @@ begin
 
   { Not a special case in the engines - a row in the same table. }
   Found := False;
-  Families := TSerializationTypes.RegisteredNullableFamilies;
+  Families := TSerialization.RegisteredNullableFamilies;
   for S in Families do
     if ContainsText(S, 'TNullable<1>') then Found := True;
   Check(Found, 'PASCALFORGE_NULLABLE_IS_A_REGISTERED_FAMILY');
@@ -151,12 +152,12 @@ begin
   { One line each, naming any one specialization. Both must happen before a
     plan is built over either family: a type's plan is cached the first time
     it is used, and a registration after that would be a silent no-op. }
-  TSerializationTypes.RegisterNullableFamily<TMaybe<Integer>>;
-  TSerializationTypes.RegisterNullableFamily<TOptional<Integer>>(
+  TSerialization.RegisterNullableFamily<TMaybe<Integer>>;
+  TSerialization.RegisterNullableFamily<TOptional<Integer>>(
     TNullableLayout.Fields('FPayload', 'FPresent'));
   { Carries both pairs of names; registered here with one of them so that
     TestInvalidRegistrations can try to register it again with the other. }
-  TSerializationTypes.RegisterNullableFamily<TDualNames<Integer>>;
+  TSerialization.RegisterNullableFamily<TDualNames<Integer>>;
 end;
 
 procedure TestForeignDefaultLayout;
@@ -167,7 +168,7 @@ begin
   Check(TSerializationTypes.TryGetNullableAccess(
     TypeInfo(TMaybe<Integer>), Access) and (Access.ValueType = TypeInfo(Integer)),
     'FOREIGN_NULLABLE_DEFAULT_LAYOUT');
-  Note('registered with: TSerializationTypes.RegisterNullableFamily<TMaybe<Integer>>');
+  Note('registered with: TSerialization.RegisterNullableFamily<TMaybe<Integer>>');
 end;
 
 procedure TestForeignCustomLayout;
@@ -224,39 +225,39 @@ begin
   Refused := 0;
 
   if Refuses('a non-record (Integer)',
-    procedure begin TSerializationTypes.RegisterNullableFamily<Integer>; end)
+    procedure begin TSerialization.RegisterNullableFamily<Integer>; end)
     then Inc(Refused);
 
   if Refuses('a class, not a record (TObject)',
-    procedure begin TSerializationTypes.RegisterNullableFamily<TObject>; end)
+    procedure begin TSerialization.RegisterNullableFamily<TObject>; end)
     then Inc(Refused);
 
   if Refuses('a record that is not generic (TFixedMaybe)',
-    procedure begin TSerializationTypes.RegisterNullableFamily<TFixedMaybe>; end)
+    procedure begin TSerialization.RegisterNullableFamily<TFixedMaybe>; end)
     then Inc(Refused);
 
   if Refuses('no has-value field (TBox<Integer>)',
-    procedure begin TSerializationTypes.RegisterNullableFamily<TBox<Integer>>; end)
+    procedure begin TSerialization.RegisterNullableFamily<TBox<Integer>>; end)
     then Inc(Refused);
 
   if Refuses('a flag that is not a one-byte Boolean (TWideFlag<Integer>)',
-    procedure begin TSerializationTypes.RegisterNullableFamily<TWideFlag<Integer>>; end)
+    procedure begin TSerialization.RegisterNullableFamily<TWideFlag<Integer>>; end)
     then Inc(Refused);
 
   if Refuses('a layout naming fields that do not exist',
-    procedure begin TSerializationTypes.RegisterNullableFamily<TMaybe<Integer>>(
+    procedure begin TSerialization.RegisterNullableFamily<TMaybe<Integer>>(
       TNullableLayout.Fields('FNope', 'FAlsoNope')); end)
     then Inc(Refused);
 
   if Refuses('an incomplete layout',
-    procedure begin TSerializationTypes.RegisterNullableFamily<TMaybe<Integer>>(
+    procedure begin TSerialization.RegisterNullableFamily<TMaybe<Integer>>(
       TNullableLayout.Fields('FValue', '')); end)
     then Inc(Refused);
 
   { Already registered with FValue/FHasValue. Accepting a second, different
     layout would make behaviour depend on unit initialization order. }
   if Refuses('the same family again with a different layout',
-    procedure begin TSerializationTypes.RegisterNullableFamily<TMaybe<Integer>>(
+    procedure begin TSerialization.RegisterNullableFamily<TMaybe<Integer>>(
       TNullableLayout.Fields('FPayload', 'FPresent')); end)
     then Inc(Refused);
 
@@ -266,7 +267,7 @@ begin
     two cases below reach the collision check itself, because both layouts
     genuinely resolve. }
   Check(Refuses('a family already registered with a different layout',
-    procedure begin TSerializationTypes.RegisterNullableFamily<TDualNames<Integer>>(
+    procedure begin TSerialization.RegisterNullableFamily<TDualNames<Integer>>(
       TNullableLayout.Fields('FPayload', 'FPresent')); end),
     'NULLABLE_FAMILY_LAYOUT_CONFLICT_REFUSED');
 
@@ -274,20 +275,20 @@ begin
     registry refuses rather than silently applying one library's field names
     to the other library's records. }
   Check(Refuses('a rival TMaybe<T> from another unit',
-    procedure begin TSerializationTypes.RegisterNullableFamily<RivalNullables.TMaybe<Integer>>(
+    procedure begin TSerialization.RegisterNullableFamily<RivalNullables.TMaybe<Integer>>(
       TNullableLayout.Fields('FItem', 'FLoaded')); end),
     'AMBIGUOUS_NULLABLE_FAMILY_REFUSED');
 
   { The idempotent case is not an error: two units may both register the same
     family the same way, and neither can know about the other. }
   Check(not Refuses('the same family again with the SAME layout',
-    procedure begin TSerializationTypes.RegisterNullableFamily<TMaybe<Integer>>; end),
+    procedure begin TSerialization.RegisterNullableFamily<TMaybe<Integer>>; end),
     'DUPLICATE_NULLABLE_REGISTRATION_IS_A_NO_OP');
 
   { A refused registration must leave nothing behind. }
-  Check(not TSerializationTypes.IsNullableType(TypeInfo(TBox<Integer>)),
+  Check(not TSerialization.IsNullableType(TypeInfo(TBox<Integer>)),
     'REFUSED_NULLABLE_REGISTRATION_LEAVES_NOTHING');
-  Check(not TSerializationTypes.IsNullableType(TypeInfo(TWideFlag<Integer>)),
+  Check(not TSerialization.IsNullableType(TypeInfo(TWideFlag<Integer>)),
     'REFUSED_NULLABLE_WIDE_FLAG_LEAVES_NOTHING');
 end;
 

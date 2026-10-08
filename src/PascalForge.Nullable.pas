@@ -11,7 +11,7 @@
   Registration
     TNullable<T> is recognised by every format with no registration. Other
     libraries' nullables are registered with
-    TSerializationTypes.RegisterNullableFamily (PascalForge.Serialization.Core).
+    TSerialization.RegisterNullableFamily<T> (PascalForge.Serialization).
 
   Documentation
     docs/nullable-families.md

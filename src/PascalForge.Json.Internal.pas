@@ -3230,7 +3230,8 @@ end;
 { Nullable recognition is not the JSON engine's business: it is a shared
   type-system fact, so that JSON, XML, BSON and the DataSet projection cannot
   disagree about which records are nullables.  The whole rule lives in
-  PascalForge.Serialization.Core - see TSerializationTypes.RegisterNullableFamily. }
+  PascalForge.Serialization.Core; families are registered with
+  TSerialization.RegisterNullableFamily<T>. }
 class function TJsonEngine.IsNullableType(ATypeInfo: PTypeInfo; out AInner: PTypeInfo): Boolean;
 var
   Access: TNullableAccess;

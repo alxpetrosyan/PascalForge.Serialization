@@ -125,7 +125,7 @@ type
     box; any other library's nullable becomes recognized by registering its
     GENERIC FAMILY once, at startup:
 
-      TSerializationTypes.RegisterNullableFamily<Other.TMaybe<Integer>>;
+      TSerialization.RegisterNullableFamily<Other.TMaybe<Integer>>;
 
     The Integer specialization is a sample, not the subject.  Only three
     things are taken from it - the declaring unit, the generic base name and
@@ -374,22 +374,17 @@ type
   end;
 
   TSerializationTypes = record
-  strict private
-    { A generic method body declared in an interface section may only
-      reference symbols the interface section can see, so the work is done
-      by this non-generic bridge (E2506).  The generic form exists only to
-      turn T into a PTypeInfo. }
-    class procedure DoRegisterNullableFamily(AInfo: PTypeInfo;
-      const ALayout: TNullableLayout); static;
   public
-    { Registers the whole generic family of T, using the FValue/FHasValue
-      layout.  Raises ENullableFamilyError when T cannot be a nullable
-      family.  Registering the same family twice with the same layout is a
-      no-op; with a different layout it raises, because which one won would
-      otherwise depend on unit initialization order. }
-    class procedure RegisterNullableFamily<T>; overload; static;
-    class procedure RegisterNullableFamily<T>(
-      const ALayout: TNullableLayout); overload; static;
+    { INTERNAL. The registry behind TSerialization.RegisterNullableFamily<T>
+      (PascalForge.Serialization), which is the public way to register a
+      nullable family: the generic there only turns T into a PTypeInfo.
+      Registers the whole generic family of AInfo with ALayout. Raises
+      ENullableFamilyError when it cannot be a nullable family. Registering
+      the same family twice with the same layout is a no-op; with a
+      different layout it raises, because which one won would otherwise
+      depend on unit initialization order. }
+    class procedure RegisterNullableFamilyFor(AInfo: PTypeInfo;
+      const ALayout: TNullableLayout); static;
 
     { Resolves - and caches - the concrete access for one specialization.
       False for anything that is not a specialization of a registered
@@ -5096,18 +5091,7 @@ end;
 
 { TSerializationTypes }
 
-class procedure TSerializationTypes.RegisterNullableFamily<T>;
-begin
-  DoRegisterNullableFamily(System.TypeInfo(T), TNullableLayout.Default);
-end;
-
-class procedure TSerializationTypes.RegisterNullableFamily<T>(
-  const ALayout: TNullableLayout);
-begin
-  DoRegisterNullableFamily(System.TypeInfo(T), ALayout);
-end;
-
-class procedure TSerializationTypes.DoRegisterNullableFamily(AInfo: PTypeInfo;
+class procedure TSerializationTypes.RegisterNullableFamilyFor(AInfo: PTypeInfo;
   const ALayout: TNullableLayout);
 var
   Base, Err, N, UnitName: string;
@@ -6396,7 +6380,8 @@ initialization
   GNullableFamilies := TList<TNullableFamily>.Create;
   GNullableAccessCache := TDictionary<PTypeInfo, TNullableAccess>.Create;
   GNullableLock := TCriticalSection.Create;
-  TSerializationTypes.RegisterNullableFamily<TNullable<Integer>>;
+  TSerializationTypes.RegisterNullableFamilyFor(TypeInfo(TNullable<Integer>),
+    TNullableLayout.Default);
 
   GContainerLock := TCriticalSection.Create;
   GListCache := TDictionary<PTypeInfo, TListAccess>.Create;
