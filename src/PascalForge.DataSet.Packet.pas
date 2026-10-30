@@ -217,10 +217,76 @@ begin
   end;
 end;
 
+{ A one-dimensional byte array - what TBlobField.Value and TBinaryField.Value
+  (ftBlob, ftGraphic, ftBytes, ftVarBytes ...) hold. VarSameValue and VarToStr
+  cannot take one: both raise EVariantTypeCastError. }
+function TryVariantBytes(const AValue: Variant; out ABytes: TBytes): Boolean;
+var
+  Len: Integer;
+  P: Pointer;
+begin
+  Result := VarIsArray(AValue) and (VarArrayDimCount(AValue) = 1) and
+    ((VarType(AValue) and varTypeMask) = varByte);
+  if not Result then Exit;
+  Len := VarArrayHighBound(AValue, 1) - VarArrayLowBound(AValue, 1) + 1;
+  SetLength(ABytes, Len);
+  if Len > 0 then
+  begin
+    P := VarArrayLock(AValue);
+    try
+      Move(P^, ABytes[0], Len);
+    finally
+      VarArrayUnlock(AValue);
+    end;
+  end;
+end;
+
+{ The text the field's own AsString gives for these bytes, which is the
+  spelling FieldValueToDynamic writes for the same value: a delta and a
+  snapshot of one table agree. TBinaryField packs the bytes into UTF-16 code
+  units (an odd last byte is padded with zero here, where the RTL leaves it
+  undefined); every other byte-holding field reads them as ANSI text. }
+function FieldBytesText(AField: TField; const ABytes: TBytes): string;
+begin
+  if AField is TBinaryField then
+  begin
+    { A string holds at most MaxInt characters, so the count fits an Integer. }
+    Result := StringOfChar(#0, Integer((Length(ABytes) + 1) div SizeOf(Char)));
+    if Length(ABytes) > 0 then
+      Move(ABytes[0], PChar(Result)^, Length(ABytes));
+  end
+  else
+    Result := TEncoding.ANSI.GetString(ABytes);
+end;
+
+{ Field-value equality for the delta writer and the delta replay. Bytes
+  compare by content; bytes against text compare in the field's spelling;
+  everything else is VarSameValue, as before. }
+function SameFieldValue(AField: TField; const A, B: Variant): Boolean;
+var
+  BytesA, BytesB: TBytes;
+  HasA, HasB: Boolean;
+begin
+  HasA := TryVariantBytes(A, BytesA);
+  HasB := TryVariantBytes(B, BytesB);
+  if not (HasA or HasB) then Exit(VarSameValue(A, B));
+  if HasA and HasB then
+    Exit((Length(BytesA) = Length(BytesB)) and
+      ((Length(BytesA) = 0) or CompareMem(@BytesA[0], @BytesB[0], Length(BytesA))));
+  if HasA then
+    Result := VarIsStr(B) and (FieldBytesText(AField, BytesA) = VarToStr(B))
+  else
+    Result := VarIsStr(A) and (FieldBytesText(AField, BytesB) = VarToStr(A));
+end;
+
 function VariantFieldValueToDynamic(AField: TField;
   const AValue: Variant): TDynamicValue;
+var
+  Bytes: TBytes;
 begin
   if VarIsEmpty(AValue) or VarIsNull(AValue) then Exit(TDynamicValue.NewNull);
+  if TryVariantBytes(AValue, Bytes) then
+    Exit(TDynamicValue.NewStr(FieldBytesText(AField, Bytes)));
   case AField.DataType of
     ftSmallint, ftInteger, ftWord, ftAutoInc, ftLargeint, ftLongWord,
     ftShortint, ftByte: Result := TDynamicValue.NewInt(AValue);
@@ -405,7 +471,7 @@ begin
               VariantFieldValueToDynamic(ADataSet.Fields[I], OldValue));
           if (ADataSet.UpdateStatus = usInserted) or
              ((ADataSet.UpdateStatus = usModified) and
-              not VarSameValue(OldValue, NewValue)) then
+              not SameFieldValue(ADataSet.Fields[I], OldValue, NewValue)) then
           begin
             Current.AsObject.Adopt(ADataSet.Fields[I].FieldName,
               VariantFieldValueToDynamic(ADataSet.Fields[I], NewValue));
@@ -1052,7 +1118,7 @@ begin
         Expected := Text;
       end;
     end;
-    if not VarSameValue(F.Value, Expected) then Exit(False);
+    if not SameFieldValue(F, F.Value, Expected) then Exit(False);
   end;
 end;
 

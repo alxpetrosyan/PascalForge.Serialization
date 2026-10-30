@@ -15,6 +15,7 @@ uses
   System.SysUtils, System.Classes, System.JSON, Data.DB, FireDAC.Comp.Client,
   Datasnap.DBClient,
   PascalForge.Serialization.Core,
+  PascalForge.Dynamic,
   PascalForge.DataSet,
   PascalForge.Json.Registration,
   PascalForge.DataSet.Json in '..\..\src\PascalForge.DataSet.Json.pas';
@@ -147,6 +148,94 @@ begin
   end;
 end;
 
+{ A TClientDataSet holding bytes: TBlobField and TBinaryField values are
+  byte-array Variants, which VarSameValue and VarToStr cannot take. A modified
+  row of such a table used to raise EVariantTypeCastError from the delta
+  writer and from the delta replay, whichever column had changed. }
+function NewBytesTable(AType: TFieldType; AWithRow: Boolean = True): TClientDataSet;
+begin
+  Result := TClientDataSet.Create(nil);
+  Result.FieldDefs.Add('Id', ftInteger);
+  if AType = ftBytes then
+    Result.FieldDefs.Add('Doc', ftBytes, 4)
+  else
+    Result.FieldDefs.Add('Doc', AType);
+  Result.CreateDataSet;
+  if not AWithRow then Exit;
+  Result.Append;
+  Result.FieldByName('Id').AsInteger := 1;
+  Result.FieldByName('Doc').AsBytes := TBytes.Create(65, 0, 200, 66);
+  Result.Post;
+  Result.MergeChangeLog;
+end;
+
+function DeltaRows(ADataSet: TDataSet): TDynamicValue;
+begin
+  Result := TDataSetSerializer.ToDynamic(ADataSet, TDataSetSerializationPolicy.DeltaOnly);
+end;
+
+procedure TestClientDataSetBytesDelta(AType: TFieldType; const ATag: string);
+var
+  Source, Target: TClientDataSet;
+  Snapshot, Delta, Row: TDynamicValue;
+  SnapshotDoc: string;
+begin
+  Writeln('-- TClientDataSet delta with a ', ATag, ' column --');
+  Source := NewBytesTable(AType);
+  Target := NewBytesTable(AType, False); // a replay rebuilds its own baseline
+  Snapshot := nil;
+  Delta := nil;
+  try
+    Snapshot := TDataSetSerializer.ToDynamic(Source, TDataSetSerializationPolicy.RowsOnly);
+    SnapshotDoc := Snapshot[0].Find('Doc').AsStr;
+
+    { Another column changes: the bytes are compared, found equal, and left out. }
+    Source.Edit;
+    Source.FieldByName('Id').AsInteger := 2;
+    Source.Post;
+    Delta := DeltaRows(Source);
+    Row := Delta.Find('Delta')[0];
+    Check(Row.Find('Current').Find('Doc') = nil, 'DATASET_JSON_' + ATag + '_UNCHANGED_BYTES_OMITTED');
+    Check(Row.Find('Current').Find('Id').AsInt = 2, 'DATASET_JSON_' + ATag + '_OTHER_CHANGE_CARRIED');
+    Check(Row.Find('Original').Find('Doc').AsStr = SnapshotDoc,
+      'DATASET_JSON_' + ATag + '_DELTA_SPELLS_BYTES_AS_SNAPSHOT');
+
+    { The delta replays: the baseline row is rebuilt, found again by its
+      contents - bytes included - and the change lands in the journal. }
+    TDataSetSerializer.FromDynamic(Delta, Target, TDataSetSerializationPolicy.DeltaOnly);
+    Target.First;
+    Check((Target.RecordCount = 1) and (Target.FieldByName('Id').AsInteger = 2) and
+      (Target.ChangeCount = 1) and (Target.FieldByName('Doc').AsString = SnapshotDoc),
+      'DATASET_JSON_' + ATag + '_DELTA_REPLAYS');
+    FreeAndNil(Delta);
+
+    { The bytes change: they are reported, spelled as the field spells them. }
+    Source.CancelUpdates;
+    Source.Edit;
+    Source.FieldByName('Doc').AsBytes := TBytes.Create(1, 2, 3, 4);
+    Source.Post;
+    Delta := DeltaRows(Source);
+    Row := Delta.Find('Delta')[0];
+    Check((Row.Find('Current').Find('Doc') <> nil) and
+      (Row.Find('Current').Find('Doc').AsStr = Source.FieldByName('Doc').AsString),
+      'DATASET_JSON_' + ATag + '_CHANGED_BYTES_CARRIED');
+    FreeAndNil(Delta);
+
+    { The same bytes written again are no change. }
+    Source.CancelUpdates;
+    Source.Edit;
+    Source.FieldByName('Doc').AsBytes := TBytes.Create(65, 0, 200, 66);
+    Source.Post;
+    Delta := DeltaRows(Source);
+    Check(Delta.Find('Delta').Count = 0, 'DATASET_JSON_' + ATag + '_SAME_BYTES_NO_CHANGE');
+  finally
+    Delta.Free;
+    Snapshot.Free;
+    Target.Free;
+    Source.Free;
+  end;
+end;
+
 begin
   { Registration is explicit: linking a registration unit registers
     nothing, so the formats this program selects at run time are
@@ -156,6 +245,8 @@ begin
     TestSnapshot;
     TestClientDataSetTarget;
     TestDelta;
+    TestClientDataSetBytesDelta(ftBlob, 'BLOB');
+    TestClientDataSetBytesDelta(ftBytes, 'BYTES');
   except
     on E: Exception do
     begin

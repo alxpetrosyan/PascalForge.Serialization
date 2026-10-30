@@ -44,6 +44,12 @@ delta
 shape these documents have always had; changing it would break every stored
 one.
 
+A column that holds bytes (`ftBlob`, `ftGraphic`, `ftBytes`, `ftVarBytes`)
+is written as the text its field's `AsString` gives, in a snapshot and in a
+delta alike, so the two agree. A `TClientDataSet` delta compares such a column
+by its bytes: an unchanged one is left out of `Current`, and a changed one is
+carried. `tests\DataSetJson` pins both, and the replay of such a delta.
+
 This is the same packet in every format. As JSON it is an object with
 `fields` and `rows`; as XML the same members as elements; as BSON the same
 document. One writer, one reader.
