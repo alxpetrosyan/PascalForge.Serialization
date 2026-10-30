@@ -185,6 +185,20 @@ type
 
 
   TCustomJsonValueSerializer = class
+  protected
+    { For a serializer that handles a WRAPPER type - a generic box, a range
+      bound, an envelope - and has to write or read what it wraps: the value
+      handled exactly as the library handles a value of type ATypeInfo
+      anywhere else, a serializer registered for that exact type included.
+      AValue must be of type ATypeInfo; the caller owns the result. }
+    class function SerializeAsType(ATypeInfo: PTypeInfo;
+      const AValue: TValue): TJSONValue; static;
+    class function DeserializeAsType(ATypeInfo: PTypeInfo;
+      const AJson: TJSONValue): TValue; static;
+    { A new instance of the class ATypeInfo, made the way the library makes
+      one while reading: a factory registered for it, else its constructor.
+      The caller owns it. }
+    class function CreateInstanceOf(ATypeInfo: PTypeInfo): TObject; static;
   public
     function SerializeValue(const AValue: TValue): TJSONValue; virtual; abstract;
     function DeserializeValue(const AJson: TJSONValue; ATypeInfo: PTypeInfo): TValue; virtual; abstract;
@@ -223,7 +237,7 @@ type
 
     Use the NON-generic base instead when the implementation deliberately
     handles more than one runtime type - a generic-family serializer
-    registered for TBound<Integer>, TBound<string> and TBound<TDateTime>
+    registered for TBox<Integer>, TBox<string> and TBox<TDateTime>
     knows its closed type only from RTTI, and TValue/PTypeInfo is the right
     tool for that job.
     ------------------------------------------------------------------------ }
@@ -808,6 +822,27 @@ begin
   FEstimated := AEstimated;
   FPath := APath;
 end;
+
+{ ------------------------------------------------- TCustomJsonValueSerializer --- }
+
+class function TCustomJsonValueSerializer.SerializeAsType(ATypeInfo: PTypeInfo;
+  const AValue: TValue): TJSONValue;
+begin
+  Result := TJsonEngine.SerializeTypedValue(ATypeInfo, AValue);
+end;
+
+class function TCustomJsonValueSerializer.DeserializeAsType(ATypeInfo: PTypeInfo;
+  const AJson: TJSONValue): TValue;
+begin
+  Result := TJsonEngine.DeserializeTypedValue(ATypeInfo, AJson);
+end;
+
+class function TCustomJsonValueSerializer.CreateInstanceOf(
+  ATypeInfo: PTypeInfo): TObject;
+begin
+  Result := TJsonEngine.CreateInstance(ATypeInfo);
+end;
+
 function TCustomJsonValueSerializer.DeserializeInto(const AJson: TJSONValue;
   ATypeInfo: PTypeInfo; AExisting: TObject; out AValue: TValue): Boolean;
 begin

@@ -115,7 +115,8 @@ $projectMarkers = [ordered]@{
   'UNICODE_UTF8'                 = @(,@('UnicodeUtf8', 'UNICODE_UTF8: PASS'))
   'OWNERSHIP'                    = @(,@('ReaderContracts', 'OWNERSHIP: PASS'))
   'CACHE'                        = @(,@('Robustness', 'CACHE: PASS'))
-  'THREADING'                    = @(,@('Robustness', 'THREADING: PASS'))
+  'THREADING'                    = @(@('Robustness', 'THREADING: PASS'),
+                                     @('Concurrency', 'CONCURRENCY: PASS'))
   'MALFORMED_INPUT'              = @(,@('Robustness', 'MALFORMED_INPUT: PASS'))
   'SECURITY_LIMITS'              = @(,@('Robustness', 'SECURITY_LIMITS: PASS'))
 }

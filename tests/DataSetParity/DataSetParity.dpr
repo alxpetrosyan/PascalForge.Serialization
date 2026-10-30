@@ -18,8 +18,8 @@ program DataSetParity;
 {$APPTYPE CONSOLE}
 
 uses
-  System.SysUtils, System.Classes, Data.DB, FireDAC.Comp.Client,
-  Datasnap.DBClient,
+  System.SysUtils, System.Classes, System.Rtti, System.TypInfo, Data.DB,
+  FireDAC.Comp.Client, Datasnap.DBClient,
   PascalForge.DataSet in '..\..\src\PascalForge.DataSet.pas';
 
 var
@@ -62,6 +62,80 @@ begin
   Result.Status := AStatus;
   Result.Active := AStatus <> TStatus.Draft;
   Result.Created := EncodeDate(2026, 3, 14) + EncodeTime(9, 30, 0, 0);
+end;
+
+{ ----------------------------------------------- a generic wrapper type --- }
+
+type
+  { A range endpoint: a value, whether it is inclusive, and whether there is
+    one at all. }
+  TLimit<T> = class
+  public
+    Value: T;
+    Inclusive: Boolean;
+    HasValue: Boolean;
+  end;
+
+  { One serializer for the whole TLimit<T> family. It adds an Inclusive
+    column of its own and leaves the wrapped value to the projection - the
+    columns and the value exactly as for a member of type T - through the
+    protected helpers on TCustomDataSetTypeSerializer: no engine unit. }
+  TLimitSerializer = class(TCustomDataSetTypeSerializer)
+  public
+    procedure AddFields(ATypeInfo: PTypeInfo; AFieldDefs: TFieldDefs;
+      const APrefix: string); override;
+    procedure WriteValue(ATypeInfo: PTypeInfo; const AValue: TValue;
+      ADataSet: TDataSet; const APrefix: string); override;
+  end;
+
+  TPeriod = class
+  public
+    Name: string;
+    Start: TLimit<TDate>;
+    Budget: TLimit<Currency>;
+    constructor Create;
+    destructor Destroy; override;
+  end;
+
+procedure TLimitSerializer.AddFields(ATypeInfo: PTypeInfo; AFieldDefs: TFieldDefs;
+  const APrefix: string);
+var
+  Ctx: TRttiContext;
+begin
+  AFieldDefs.Add(APrefix + 'Inclusive', ftBoolean);
+  AddFieldsAsType(Ctx.GetType(ATypeInfo).GetField('Value').FieldType.Handle,
+    AFieldDefs, APrefix + 'Value');
+end;
+
+procedure TLimitSerializer.WriteValue(ATypeInfo: PTypeInfo; const AValue: TValue;
+  ADataSet: TDataSet; const APrefix: string);
+var
+  Ctx: TRttiContext;
+  T: TRttiType;
+  Limit: TObject;
+begin
+  Limit := AValue.AsObject;
+  if Limit = nil then Exit;
+  T := Ctx.GetType(ATypeInfo);
+  if not T.GetField('HasValue').GetValue(Limit).AsBoolean then Exit;
+  ADataSet.FieldByName(APrefix + 'Inclusive').AsBoolean :=
+    T.GetField('Inclusive').GetValue(Limit).AsBoolean;
+  WriteValueAsType(T.GetField('Value').FieldType.Handle,
+    T.GetField('Value').GetValue(Limit), ADataSet, APrefix + 'Value');
+end;
+
+constructor TPeriod.Create;
+begin
+  inherited Create;
+  Start := TLimit<TDate>.Create;
+  Budget := TLimit<Currency>.Create;
+end;
+
+destructor TPeriod.Destroy;
+begin
+  Budget.Free;
+  Start.Free;
+  inherited Destroy;
 end;
 
 { The schema as text: name, type and size for every field, in order. }
@@ -342,14 +416,57 @@ begin
   end;
 end;
 
+{ A type serializer for a generic wrapper family projects what it wraps with
+  the protected helpers: TLimit<TDate> gets a date column and TLimit<Currency>
+  a currency column, as plain TDate and Currency members would, and an empty
+  limit leaves its columns null. }
+procedure TestWrapperSerializer;
+var
+  P: TPeriod;
+  DS: TFDMemTable;
+begin
+  Writeln;
+  Writeln('-- a type serializer for a generic wrapper family --');
+  P := TPeriod.Create;
+  try
+    P.Name := 'Q1';
+    P.Start.Value := EncodeDate(2026, 1, 1);
+    P.Start.Inclusive := True;
+    P.Start.HasValue := True;
+    DS := TDataSetSerializer.CreateFDMemTable<TPeriod>(P);
+    try
+      Note(DescribeSchema(DS));
+      Check((DS.FieldByName('Start.Value').DataType = ftDate) and
+        (DS.FieldByName('Start.Inclusive').DataType = ftBoolean),
+        'DATASET_WRAPPER_PROJECTS_THE_WRAPPED_TYPE');
+      Check(DS.FieldByName('Budget.Value').DataType in [ftCurrency, ftBCD, ftFMTBcd],
+        'DATASET_WRAPPER_COLUMN_FOLLOWS_T');
+      Check((DS.FieldByName('Start.Value').AsDateTime = EncodeDate(2026, 1, 1)) and
+        DS.FieldByName('Start.Inclusive').AsBoolean,
+        'DATASET_WRAPPER_WRITES_THE_WRAPPED_VALUE');
+      Check(DS.FieldByName('Budget.Value').IsNull and
+        DS.FieldByName('Budget.Inclusive').IsNull,
+        'DATASET_WRAPPER_EMPTY_LEAVES_NULLS');
+    finally
+      DS.Free;
+    end;
+  finally
+    P.Free;
+  end;
+end;
+
 begin
   try
+    { Before anything is projected: configuration freezes at first use. }
+    TDataSetSerializer.RegisterGenericTypeSerializer(TypeInfo(TLimit<Integer>),
+      TLimitSerializer);
     TestFireDac;
     TestClientDataSet;
     TestArrays;
     TestParity;
     TestOwnedReturns;
     TestExceptionCleanup;
+    TestWrapperSerializer;
   except
     on E: Exception do
     begin

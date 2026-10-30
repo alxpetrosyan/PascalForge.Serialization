@@ -272,7 +272,9 @@ code inside the library.
   the handler itself, so unregistering must not overlap serialization.
 - **Serializer instances are shared** across operations and threads. Keep
   them stateless. Plan caches are built under a lock; `tests\Robustness`
-  races eight threads into a cold type in every format.
+  races eight threads into a cold type in every format, and
+  `tests\Concurrency` shares one source, registered serializers and
+  DataSets across eight threads.
 - **A reader refuses what does not match the contract.** A scalar where a
   list belongs is an input error, raised BEFORE an existing container is
   cleared - never an empty list. A number past the member's range, an enum
@@ -355,6 +357,10 @@ Test projects worth knowing about before changing a format:
 - `tests\Robustness` - nesting bombs, huge lengths, entity and alias
   expansion, every truncation and hostile substitutions of every format's
   documents, threading, and plan-cache stability.
+- `tests\Concurrency` - many threads at once over one shared source object,
+  every format side by side, cycle tracking, registered serializers,
+  nested DataSets and conversion; each thread must get what one thread alone
+  gets, and nothing is left alive.
 - `tests\Lifecycle` - explicit registration of every format family, and the
   automatic configuration freeze of every serializer.
 - `tests\PackageProbe` - built by `scripts\check-packages.ps1` with runtime

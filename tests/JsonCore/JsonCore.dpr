@@ -14,7 +14,7 @@ program JsonCore;
 
 uses
   System.SysUtils, System.Classes, System.JSON, System.Generics.Collections,
-  System.DateUtils,
+  System.DateUtils, System.Rtti, System.TypInfo,
   PascalForge.Serialization.Core, PascalForge.Dynamic,
   PascalForge.Json in '..\..\src\PascalForge.Json.pas',
   { The Extended JSON checks reach the structural path, which has no public
@@ -109,6 +109,131 @@ destructor TBag.Destroy;
 begin
   FTags.Free;
   FItems.Free;
+  inherited Destroy;
+end;
+
+{ ----------------------------------------------- a generic wrapper type --- }
+
+type
+  { A range endpoint: a value, whether it is inclusive, and whether there is
+    one at all. Written as an object with "value" and "inclusive", or as null
+    when empty. }
+  TLimit<T> = class
+  public
+    Value: T;
+    Inclusive: Boolean;
+    HasValue: Boolean;
+  end;
+
+  { A type with a serializer of its own, so that the wrapped value proves the
+    wrapper's serializer goes through the registry, not around it. }
+  TCode = record
+    Text: string;
+  end;
+
+  TCodeSerializer = class(TCustomJsonValueSerializer<TCode>)
+  public
+    function SerializeValue(const AValue: TCode): TJSONValue; override;
+    function DeserializeValue(const AJson: TJSONValue): TCode; override;
+  end;
+
+  { One serializer for the whole TLimit<T> family. It knows nothing about T:
+    the wrapped value goes through SerializeAsType / DeserializeAsType, and the
+    instance through CreateInstanceOf - no engine unit involved. }
+  TLimitSerializer = class(TCustomJsonValueSerializer)
+  public
+    function SerializeValue(const AValue: TValue): TJSONValue; override;
+    function DeserializeValue(const AJson: TJSONValue; ATypeInfo: PTypeInfo): TValue; override;
+  end;
+
+  TLimits = class
+  public
+    Low: TLimit<Integer>;
+    High: TLimit<TCode>;
+    Missing: TLimit<Integer>;
+    constructor Create;
+    destructor Destroy; override;
+  end;
+
+function TCodeSerializer.SerializeValue(const AValue: TCode): TJSONValue;
+begin
+  Result := TJSONString.Create('C:' + AValue.Text);
+end;
+
+function TCodeSerializer.DeserializeValue(const AJson: TJSONValue): TCode;
+begin
+  Result.Text := AJson.Value.Substring(2);
+end;
+
+function TLimitSerializer.SerializeValue(const AValue: TValue): TJSONValue;
+var
+  Ctx: TRttiContext;
+  Limit: TObject;
+  T: TRttiType;
+  Obj: TJSONObject;
+begin
+  Limit := AValue.AsObject;
+  if Limit = nil then Exit(TJSONNull.Create);
+  T := Ctx.GetType(Limit.ClassType);
+  if not T.GetField('HasValue').GetValue(Limit).AsBoolean then
+    Exit(TJSONNull.Create);
+  Obj := TJSONObject.Create;
+  try
+    Obj.AddPair('value', SerializeAsType(T.GetField('Value').FieldType.Handle,
+      T.GetField('Value').GetValue(Limit)));
+    Obj.AddPair('inclusive',
+      TJSONBool.Create(T.GetField('Inclusive').GetValue(Limit).AsBoolean));
+  except
+    Obj.Free;
+    raise;
+  end;
+  Result := Obj;
+end;
+
+function TLimitSerializer.DeserializeValue(const AJson: TJSONValue;
+  ATypeInfo: PTypeInfo): TValue;
+var
+  Ctx: TRttiContext;
+  Limit: TObject;
+  T: TRttiType;
+  V: TJSONValue;
+begin
+  Limit := CreateInstanceOf(ATypeInfo);
+  try
+    T := Ctx.GetType(ATypeInfo);
+    if AJson is TJSONObject then
+    begin
+      V := TJSONObject(AJson).Values['inclusive'];
+      if V is TJSONBool then
+        T.GetField('Inclusive').SetValue(Limit, TJSONBool(V).AsBoolean);
+      V := TJSONObject(AJson).Values['value'];
+      if (V <> nil) and not (V is TJSONNull) then
+      begin
+        T.GetField('Value').SetValue(Limit,
+          DeserializeAsType(T.GetField('Value').FieldType.Handle, V));
+        T.GetField('HasValue').SetValue(Limit, True);
+      end;
+    end;
+    TValue.Make(@Limit, ATypeInfo, Result);
+    Limit := nil;
+  finally
+    Limit.Free;
+  end;
+end;
+
+constructor TLimits.Create;
+begin
+  inherited Create;
+  Low := TLimit<Integer>.Create;
+  High := TLimit<TCode>.Create;
+  Missing := TLimit<Integer>.Create;
+end;
+
+destructor TLimits.Destroy;
+begin
+  Missing.Free;
+  High.Free;
+  Low.Free;
   inherited Destroy;
 end;
 
@@ -311,6 +436,47 @@ begin
     { No read delegate was registered, so the built-in reader ran and the
       marker the writer added is simply part of the string. }
     Check(Back.Footer = '--end', 'JSON_ONE_SIDED_DEFAULT_READ');
+  finally
+    Back.Free;
+  end;
+end;
+
+{ A serializer for a generic wrapper family writes and reads what it wraps
+  with the protected helpers on TCustomJsonValueSerializer: the wrapped value
+  goes through the registry (TCode's own serializer runs), the instance is
+  made the way the library makes one, and no engine unit is involved. }
+procedure TestWrapperSerializer;
+var
+  L, Back: TLimits;
+  Json: string;
+begin
+  Writeln('-- a serializer for a generic wrapper family --');
+  L := TLimits.Create;
+  try
+    L.Low.Value := 5;
+    L.Low.Inclusive := True;
+    L.Low.HasValue := True;
+    L.High.Value.Text := 'abc';
+    L.High.HasValue := True;
+    Json := TJsonSerializer.Serialize(L);
+  finally
+    L.Free;
+  end;
+  Note(Json);
+  Check(Json.Contains('"low":{"value":5,"inclusive":true}'),
+    'JSON_WRAPPER_WRITES_THE_WRAPPED_VALUE');
+  Check(Json.Contains('"high":{"value":"C:abc","inclusive":false}'),
+    'JSON_WRAPPER_VALUE_USES_ITS_REGISTERED_SERIALIZER');
+  Check(Json.Contains('"missing":null'), 'JSON_WRAPPER_EMPTY_IS_NULL');
+
+  Back := TJsonSerializer.Deserialize<TLimits>(Json);
+  try
+    Check(Back.Low.HasValue and (Back.Low.Value = 5) and Back.Low.Inclusive,
+      'JSON_WRAPPER_READS_THE_WRAPPED_VALUE');
+    Check(Back.High.HasValue and (Back.High.Value.Text = 'abc') and
+      not Back.High.Inclusive, 'JSON_WRAPPER_READ_USES_ITS_REGISTERED_SERIALIZER');
+    Check((Back.Missing = nil) or not Back.Missing.HasValue,
+      'JSON_WRAPPER_NULL_READS_EMPTY');
   finally
     Back.Free;
   end;
@@ -1340,6 +1506,11 @@ begin
 
   TJsonSerializer.RegisterEnumMapping<TStatus>(['draft', 'active', 'closed']);
 
+  { One serializer for every TLimit<T>, and one for the type it wraps. }
+  TJsonSerializer.RegisterGenericTypeSerializer(TypeInfo(TLimit<Integer>),
+    TLimitSerializer);
+  TJsonSerializer.RegisterTypeSerializer<TCode, TCodeSerializer>;
+
   { A serializer class, checked by the compiler. }
   TJsonSerializer.RegisterFieldOverride<TNote>('Subject',
     TJsonFieldOverride.SerializeWith<string, TTrimmedSerializer>);
@@ -1362,6 +1533,7 @@ begin
     TestCollections;
     TestEnumMapping;
     TestCustomSerializers;
+    TestWrapperSerializer;
     TestTryDeserialize;
     TestRefusedPlanBuilds;
     TestLevels;

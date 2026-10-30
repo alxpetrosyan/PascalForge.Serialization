@@ -162,6 +162,16 @@ type
   TDataSetFieldHandlerClass = class of TCustomDataSetFieldHandler;
 
   TCustomDataSetTypeSerializer = class
+  protected
+    { For a serializer that handles a WRAPPER type and has to project what it
+      wraps: the columns, and the values written into them, exactly as the
+      projection makes them for a member of type ATypeInfo named AName -
+      a serializer registered for that type included. AName is the full
+      column name (or prefix) the wrapped member gets. }
+    class procedure AddFieldsAsType(ATypeInfo: PTypeInfo; AFieldDefs: TFieldDefs;
+      const AName: string); static;
+    class procedure WriteValueAsType(ATypeInfo: PTypeInfo; const AValue: TValue;
+      ADataSet: TDataSet; const AName: string); static;
   public
     procedure AddFields(ATypeInfo: PTypeInfo; AFieldDefs: TFieldDefs;
       const APrefix: string); virtual; abstract;
@@ -1318,6 +1328,21 @@ begin
   Typed := TDataSetExtensionSupport.ValueAsTyped<T>(AValue, ClassType);
   WriteValue(Typed, AField);
 end;
+
+{ ---------------------------------------------- TCustomDataSetTypeSerializer --- }
+
+class procedure TCustomDataSetTypeSerializer.AddFieldsAsType(ATypeInfo: PTypeInfo;
+  AFieldDefs: TFieldDefs; const AName: string);
+begin
+  TDataSetEngine.AddTypeProjection(ATypeInfo, AFieldDefs, AName);
+end;
+
+class procedure TCustomDataSetTypeSerializer.WriteValueAsType(ATypeInfo: PTypeInfo;
+  const AValue: TValue; ADataSet: TDataSet; const AName: string);
+begin
+  TDataSetEngine.WriteTypeProjection(ATypeInfo, AValue, ADataSet, AName);
+end;
+
 procedure TCustomDataSetTypeSerializer<T>.AddFields(ATypeInfo: PTypeInfo;
   AFieldDefs: TFieldDefs; const APrefix: string);
 begin

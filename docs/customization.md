@@ -223,6 +223,11 @@ TJsonSerializer.RegisterGenericTypeSerializer(TypeInfo(TBox<Integer>),
   TBoxSerializer);
 ```
 
+What the box wraps is written and read with the protected helpers
+`SerializeAsType`, `DeserializeAsType` and `CreateInstanceOf` (the DataSet
+counterpart: `AddFieldsAsType`, `WriteValueAsType`), so the wrapped value is
+handled exactly as anywhere else - see the API reference.
+
 **13. A class-hierarchy serializer** - a base class and its descendants:
 
 ```pascal

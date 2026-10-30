@@ -709,6 +709,71 @@ begin
   Check(AllFd and AllCds, 'DATASET_STRUCTURAL_INFERENCE');
 end;
 
+{ A nested table defined through ChildDefs. Once the DataSet is created,
+  FireDAC and the ClientDataSet move the child definitions onto the nested
+  DataSet and ChildDefs reads empty - the written schema must still carry
+  the nested columns, or the document cannot be read back. }
+procedure TestNestedStructureRoundTrip;
+var
+  DS, FD: TFDMemTable;
+  CDS: TClientDataSet;
+  FieldDef: TFieldDef;
+  Nested: TDataSet;
+  Text: string;
+begin
+  Writeln;
+  Writeln('-- a nested table keeps its schema through a round trip --');
+
+  DS := TFDMemTable.Create(nil);
+  try
+    DS.FieldDefs.Add('Id', ftInteger);
+    FieldDef := DS.FieldDefs.AddFieldDef;
+    FieldDef.Name := 'Lines';
+    FieldDef.DataType := ftDataSet;
+    FieldDef.ChildDefs.Add('Code', ftWideString, 20);
+    DS.CreateDataSet;
+    DS.Append;
+    DS.FieldByName('Id').AsInteger := 1;
+    Nested := TDataSetField(DS.FieldByName('Lines')).NestedDataSet;
+    Nested.Append;
+    Nested.FieldByName('Code').AsString := 'c1';
+    Nested.Post;
+    DS.Post;
+
+    Text := TDataSetSerializer.Serialize(DS, TSerializationFormat.Json,
+      TDataSetSerializationPolicy.StructureAndRows).AsText;
+    Note(Text);
+    Check(Text.Contains('"children":[{"name":"Code"'),
+      'DATASET_NESTED_SCHEMA_WRITTEN');
+
+    FD := TFDMemTable.Create(nil);
+    try
+      TDataSetSerializer.Deserialize(Text, TSerializationFormat.Json, FD);
+      FD.First;
+      Nested := TDataSetField(FD.FieldByName('Lines')).NestedDataSet;
+      Check((FD.RecordCount = 1) and (Nested.RecordCount = 1) and
+            (Nested.FieldByName('Code').AsString = 'c1'),
+        'DATASET_NESTED_ROUND_TRIP_FDMEMTABLE');
+    finally
+      FD.Free;
+    end;
+
+    CDS := TClientDataSet.Create(nil);
+    try
+      TDataSetSerializer.Deserialize(Text, TSerializationFormat.Json, CDS);
+      CDS.First;
+      Nested := TDataSetField(CDS.FieldByName('Lines')).NestedDataSet;
+      Check((CDS.RecordCount = 1) and (Nested.RecordCount = 1) and
+            (Nested.FieldByName('Code').AsString = 'c1'),
+        'DATASET_NESTED_ROUND_TRIP_CLIENTDATASET');
+    finally
+      CDS.Free;
+    end;
+  finally
+    DS.Free;
+  end;
+end;
+
 { A DataSet has its own naming rules, and they are not XML's. "$type" is
   fine as a column name, so it stays "$type" - the adaptation belongs to the
   destination that cannot take the name, and this destination can. }
@@ -873,6 +938,7 @@ begin
     Writeln;
     TestAnyRegisteredFormat;
     TestDataSetKeepsSourceNames;
+    TestNestedStructureRoundTrip;
     TestCapabilityAndSourceShape;
   except
     on E: Exception do

@@ -563,7 +563,7 @@ itself.
 | `TJsonFieldOverride.SerializeWith<T, TSer>` | one member, compiler-checked |
 | `TJsonFieldOverride.SerializeWith<T>(...)` / `DeserializeWith<T>(...)` | one member, from delegates |
 | `[JsonSerializer(...)]` | one member, on the declaration |
-| `RegisterGenericTypeSerializer<TBound<Integer>>` | every specialization of that generic family (declaring unit + base name + arity) |
+| `RegisterGenericTypeSerializer<TBox<Integer>>` | every specialization of that generic family (declaring unit + base name + arity) |
 | `RegisterClassTypeSerializer(TStream, ...)` | that class and every descendant |
 | `RegisterUnitClassTypeSerializer('MyApp.*', TDataSet, ...)` | that value base class, but only for members whose **owner** is in a matching unit |
 | `TJsonFieldOverride.SerializeWith(...)` (untyped) | one member, any runtime type |
@@ -592,6 +592,26 @@ Use it for: dynamic runtime serializers; serializers intentionally handling
 several Delphi types; generic-family serializers spanning many closed generic
 types; unit/context infrastructure; low-level bridge code. Everything else is
 better written against `TCustomJsonValueSerializer<T>`.
+
+**A serializer for a wrapper type** - a generic box, a range bound, an
+envelope - writes and reads what it wraps through three protected helpers on
+`TCustomJsonValueSerializer`, so it never needs an engine unit:
+
+| helper | does |
+| --- | --- |
+| `SerializeAsType(TypeInfo, Value)` | the wrapped value written exactly as the library writes a value of that type, a serializer registered for that exact type included |
+| `DeserializeAsType(TypeInfo, Json)` | the same, read |
+| `CreateInstanceOf(TypeInfo)` | a new instance, made the way the library makes one while reading: a registered factory, else the constructor |
+
+```pascal
+function TBoxSerializer.SerializeValue(const AValue: TValue): TJSONValue;
+var
+  F: TRttiField;
+begin
+  F := TRttiContext.Create.GetType(AValue.TypeInfo).GetField('Value');
+  Result := SerializeAsType(F.FieldType.Handle, F.GetValue(AValue.AsObject));
+end;
+```
 
 Two further optional overrides exist on the untyped base for infrastructure
 that needs to know where a value came from:
@@ -2559,6 +2579,14 @@ TDataSetSerializer.RegisterTypeSerializer<TPeriod, TPeriodTypeSerializer>;
 
 `APrefix` is the composed name stem for the member (`'Validity.'`); append the
 part name to it in both methods, identically.
+
+A type serializer for a **wrapper type** - `TBox<T>`, a range bound - projects
+what it wraps with two protected helpers on `TCustomDataSetTypeSerializer`:
+`AddFieldsAsType(TypeInfo, FieldDefs, Name)` adds the columns, and
+`WriteValueAsType(TypeInfo, Value, DataSet, Name)` writes the value, exactly as
+the projection does for a member of that type, a serializer or handler
+registered for it included. `Name` is the full column name or stem the
+wrapped value gets, typically `APrefix + 'Value'`.
 
 **Advanced / infrastructure.** The untyped `TCustomDataSetFieldHandler` and
 `TCustomDataSetTypeSerializer`, and the `PTypeInfo` registration overloads

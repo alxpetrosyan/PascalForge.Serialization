@@ -51,6 +51,7 @@ $Tests = @(
   @{ Dir = 'UnicodeUtf8';    Marker = 'UNICODE_UTF8: PASS' }
   @{ Dir = 'ReaderContracts'; Marker = 'READER_CONTRACTS: PASS' }
   @{ Dir = 'Robustness';      Marker = 'ROBUSTNESS: PASS' }
+  @{ Dir = 'Concurrency';     Marker = 'CONCURRENCY: PASS' }
   @{ Dir = 'Lifecycle';       Marker = 'LIFECYCLE: PASS' }
   @{ Dir = 'Dynamic';         Marker = 'DYNAMIC: PASS' }
   @{ Dir = 'GeneralAttributes'; Marker = 'GENERAL_ATTRIBUTES: PASS' }

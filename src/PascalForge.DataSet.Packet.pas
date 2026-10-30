@@ -312,10 +312,17 @@ end;
   WRITING
   =========================================================================== }
 
-procedure AddFieldDefs(AFieldDefs: TFieldDefs; AFields: TDynamicValue);
+{ ADataSet is the open DataSet the definitions describe, or nil. A DataSet
+  that creates its nested tables (TFDMemTable, TClientDataSet) moves the
+  child definitions onto the nested DataSet and leaves ChildDefs empty, so
+  the child schema is read from the nested DataSet when ChildDefs has none. }
+procedure AddFieldDefs(AFieldDefs: TFieldDefs; AFields: TDynamicValue;
+  ADataSet: TDataSet);
 var
   I: Integer;
   O, Children: TDynamicValue;
+  Field: TField;
+  Nested: TDataSet;
 begin
   for I := 0 to AFieldDefs.Count - 1 do
   begin
@@ -329,7 +336,20 @@ begin
     begin
       Children := TDynamicValue.NewArray;
       O.AsObject.Adopt(MEMBER_CHILDREN, Children);
-      AddFieldDefs(AFieldDefs[I].ChildDefs, Children);
+      Nested := nil;
+      if ADataSet <> nil then
+      begin
+        Field := ADataSet.FindField(AFieldDefs[I].Name);
+        if Field is TDataSetField then
+          Nested := TDataSetField(Field).NestedDataSet;
+      end;
+      if (AFieldDefs[I].ChildDefs.Count = 0) and (Nested <> nil) then
+      begin
+        if Nested.FieldDefs.Count = 0 then Nested.FieldDefs.Update;
+        AddFieldDefs(Nested.FieldDefs, Children, Nested);
+      end
+      else
+        AddFieldDefs(AFieldDefs[I].ChildDefs, Children, Nested);
     end;
   end;
 end;
@@ -531,7 +551,7 @@ begin
           begin
             Fields := TDynamicValue.NewArray;
             O.AsObject.Adopt(MEMBER_DELTA_FIELDS, Fields);
-            AddFieldDefs(ADataSet.FieldDefs, Fields);
+            AddFieldDefs(ADataSet.FieldDefs, Fields, ADataSet);
           end;
           if ADataSet is TClientDataSet then
             O.AsObject.Adopt(MEMBER_DELTA, ClientDataSetDelta(TClientDataSet(ADataSet)))
@@ -556,7 +576,7 @@ begin
       try
         Fields := TDynamicValue.NewArray;
         O.AsObject.Adopt(MEMBER_FIELDS, Fields);
-        AddFieldDefs(ADataSet.FieldDefs, Fields);
+        AddFieldDefs(ADataSet.FieldDefs, Fields, ADataSet);
         O.AsObject.Adopt(MEMBER_ROWS, DataSetRowsToPacket(ADataSet, APolicy));
         if AIncludeName then
           O.AsObject.Adopt(MEMBER_DATASETNAME, TDynamicValue.NewStr(ADataSet.Name));
