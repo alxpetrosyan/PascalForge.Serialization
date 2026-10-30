@@ -386,6 +386,17 @@ type
     class procedure RegisterNullableFamilyFor(AInfo: PTypeInfo;
       const ALayout: TNullableLayout); static;
 
+    { BACKWARD COMPATIBILITY with 0.9.x, where registration lived here.
+      Exactly TSerialization.RegisterNullableFamily<T>: the same registry,
+      the same rules, the same errors. Kept for existing callers such as
+      TSerializationTypes.RegisterNullableFamily<TNullable<Integer>>; new
+      code uses TSerialization (PascalForge.Serialization). }
+    class procedure RegisterNullableFamily<T>; overload; static;
+      deprecated 'Use TSerialization.RegisterNullableFamily<T> (PascalForge.Serialization)';
+    class procedure RegisterNullableFamily<T>(
+      const ALayout: TNullableLayout); overload; static;
+      deprecated 'Use TSerialization.RegisterNullableFamily<T> (PascalForge.Serialization)';
+
     { Resolves - and caches - the concrete access for one specialization.
       False for anything that is not a specialization of a registered
       family. }
@@ -5090,6 +5101,17 @@ begin
 end;
 
 { TSerializationTypes }
+
+class procedure TSerializationTypes.RegisterNullableFamily<T>;
+begin
+  RegisterNullableFamilyFor(System.TypeInfo(T), TNullableLayout.Default);
+end;
+
+class procedure TSerializationTypes.RegisterNullableFamily<T>(
+  const ALayout: TNullableLayout);
+begin
+  RegisterNullableFamilyFor(System.TypeInfo(T), ALayout);
+end;
 
 class procedure TSerializationTypes.RegisterNullableFamilyFor(AInfo: PTypeInfo;
   const ALayout: TNullableLayout);
